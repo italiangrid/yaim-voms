@@ -1,0 +1,88 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright 
+# holders.  
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+#
+#    http://www.apache.org/licenses/LICENSE-2.0 
+#
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS 
+# OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+##############################################################################
+#
+# NAME : 	    config_voms_admin_mysql
+#
+# DESCRIPTION : This function configures the voms admin for mysql.
+ 
+# AUTHORS :     yaim-contact@cern.ch
+#
+# NOTES : 
+#
+# YAIM MODULE:  glite-yaim-voms
+#                 
+##############################################################################
+
+config_voms_admin_mysql_check () {
+
+requires $1 VOS VO__VOMS_ADMIN_PORT VO__VOMS_ADMIN_DB_NAME VO__VOMS_ADMIN_DB_USER \ 
+            VO__VOMS_ADMIN_DB_USER_PASSWORD 
+
+if [ ! "VOMS_ADMIN_HOSTNAME" ]; then requires VO__VOMS_ADMIN_HOSTNAME fi
+if [ ! "VOMS_ADMIN_CERT" ]; then requires VO__VOMS_ADMIN_CERT fi
+if [ ! "VOMS_ADMIN_DB_HOST" ]; then requires VO__VOMS_ADMIN_DB_HOST fi
+if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then requires VO__VOMS_ADMIN_SMTP_HOST fi
+if [ ! "VOMS_ADMIN_MAIL" ]; then requires VO__VOMS_ADMIN_MAIL fi
+
+}
+
+config_voms_admin_mysql_setenv () {
+
+
+}
+
+config_voms_admin_mysql () {
+
+if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" }; then
+
+for vo in ${VOS}; do
+
+  VO=`echo ${vo} | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+  for i in (VOMS_ADMIN_HOSTNAME VOMS_ADMIN_CERT VOMS_ADMIN_DB_HOST VOMS_ADMIN_SMTP_HOST VOMS_ADMIN_MAIL MYSQL_ADMIN MYSQL_PASSWORD MYSQL_PORT); do
+    value=get_vo_param ${vo} $i
+    if [ if [ "x${value}" = "x" ]; then
+      VAR_$i=$value
+    else
+      VAR_$i=`eval echo "\\$VOMS_${VO}_$i"`
+    fi
+  done
+ 
+  options=" --vo ${vo} \
+            --dbtype "mysql" \
+            --dbname `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_NAME"` \
+            --dbauser ${VAR_MYSQL_ADMIN} \
+            --dbapwd ${VAR_MYSQL_PASSWORD} \
+            --dbusername `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER"` \
+            --dbpassword `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER_PASSWORD" \
+            --dbhost ${VAR_VOMS_ADMIN_DB_HOST} \
+            --dbport ${VAR_MYSQL_PORT} \
+            --port `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_PORT"` \
+            --smtp-host ${VAR_VOMS_ADMIN_SMTP_HOST}\
+            --mail-from ${VOMS_ADMIN_MAIL} "
+
+
+else
+
+  yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=no" 
+
+fi # VOMS_ADMIN_INSTALL=yes
+
+}
+
+
