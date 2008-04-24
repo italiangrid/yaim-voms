@@ -1,0 +1,85 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# NAME :            glite-voms_mysql.pre
+#
+# DESCRIPTION : This function configures the default parameters for voms mysql.
+
+# AUTHORS :     yaim-contact@cern.ch
+#
+# NOTES :
+#
+# YAIM MODULE:  glite-yaim-voms
+#
+##############################################################################
+
+###########
+# General #
+###########
+
+X509_HOST_CERT="/etc/grid-security/hostcert.pem"
+X509_HOST_KEY="/etc/grid-security/hostkey.pem"
+
+
+##############
+# VOMS_ADMIN #
+##############
+
+# Set this variable to 'no' if you don't want to configure the voms-admin.
+VOMS_ADMIN_INSTALL=yes
+
+# Set this to 'yesy' if you want to enable the build in request scheduler for voms admin.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_REQUEST_SCHEDULER
+VOMS_ADMIN_REQUEST_SCHEDULER=no
+
+# Set this variable to no if you want to disable the user registration 
+# via the voms-admin web interface.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_USER_REGISTRATION
+VOMS_ADMIN_WEB_REGISTRATION=yes
+
+
+#########
+# Mysql #
+#########
+
+# Administrator login name for the MySQL database.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_MYSQL_ADMIN
+MYSQL_ADMIN=root
+
+# "Port number of the database server for mysql.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_MYSQL_PORT
+MYSQL_PORT=3306
+
+# The number of simultaneous client connections allowed.
+# Increasing this value increases the number of file descriptors
+# that mysqld requires.
+MYSQL_MAX_CONNECTIONS=500
+
+
+##########
+# Tomcat #
+##########
+
+CATALINA_HOME=/var/lib/tomcat5
+
+TOMCAT_USER=${TOMCAT_USER:-tomcat}
