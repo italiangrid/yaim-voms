@@ -32,14 +32,17 @@
 # Administrator login password for the MySQL database.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_MYSQL_PASSWORD
+# If not specified YAIM will use the MYSQL_PASSWORD parameter in site-info.def
 
 # The port on the VOMS server listening for request for each VO
 # This is used in the vomses configuration file
-# For example: '15000'
+# By convention, port numbers are allocated starting with 15000
 VO_<vo_name>_VOMS_ADMIN_PORT=port_number
 
-# Database name to be used to store VOMS information.
-VO_<vo_name>_VOMS_ADMIN_DB_NAME=db_name
+# Database name for the VO's database account.
+# On mysql denotes the name of the database, and may not be
+# specified (the default being voms_<vo_name>)
+# VO_<vo_name>_VOMS_ADMIN_DB_NAME=db_name
 
 # Name of database user.
 VO_<vo_name>_VOMS_ADMIN_DB_USER=user_name
@@ -80,3 +83,12 @@ VOMS_ADMIN_SMTP_HOST=hostname
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_VOMS_ADMIN_MAIL
 VOMS_ADMIN_MAIL=mail
+
+# The UNIX group that Tomcat is run under
+# voms admin default is tomcat 5
+# VOMS_ADMIN_TOMCAT_GROUP=new_value
+
+# The UNIX group that the VOMS core service is run under
+# voms admin default is voms
+# VOMS_ADMIN_VOMS_GROUP=new_value
+

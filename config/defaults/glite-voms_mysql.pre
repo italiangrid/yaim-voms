@@ -55,6 +55,13 @@ VOMS_ADMIN_REQUEST_SCHEDULER=no
 # VO_<vo_name>_VOMS_ADMIN_USER_REGISTRATION
 VOMS_ADMIN_WEB_REGISTRATION=yes
 
+# If set to 'yes' it will  clean out and (re)create database schema.
+# The current database contents will be lost.
+VOMS_ADMIN_DEPLOY_DATABASE=no
+
+# verbosity
+VOMS_ADMIN_VERBOSE=yes
+
 
 #########
 # Mysql #
