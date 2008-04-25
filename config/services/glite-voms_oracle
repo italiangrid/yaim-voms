@@ -1,0 +1,97 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004.
+# See http://www.eu-egee.org/partners/ for details on the copyright
+# holders.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS
+# OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+##############################################################################
+#
+# NAME :            glite-voms_oracle
+#
+# DESCRIPTION : This function configures the parameters for voms oracle.
+
+# AUTHORS :     yaim-contact@cern.ch
+#
+# NOTES :
+#
+# YAIM MODULE:  glite-yaim-voms
+#
+##############################################################################
+
+# The port on the VOMS server listening for request for each VO
+# This is used in the vomses configuration file
+# By convention, port numbers are allocated starting with 15000
+VO_<vo_name>_VOMS_ADMIN_PORT=port_number
+
+# Database name to be used to store VOMS information.
+# Required on oracle installations, refers to the tns alias associated with the db.
+VO_<vo_name>_VOMS_ADMIN_DB_NAME=db_name
+
+# Name of database user.
+VO_<vo_name>_VOMS_ADMIN_DB_USER=user_name
+
+# Password of database user account.
+VO_<vo_name>_VOMS_ADMIN_DB_USER_PASSWORD=password
+
+# The full hostname of the VOMS server responsible for each VO.
+# be exactly one entry for each VO
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_HOSTNAME
+VOMS_ADMIN_HOSTNAME=hostname
+
+# The path of the certificate file (in pem format) of an initial VO administrator.
+# The VO will be set up so that this user has full VO administration
+# privileges.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_CERT
+
+VOMS_ADMIN_CERT=user_certificate
+
+# Hostname of the database server. Put 'localhost'
+# if you run the database on the same machine.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_DB_HOST
+VOMS_ADMIN_DB_HOST=hostname
+
+# Host to which voms-admin-service-generated emails should
+# be submitted. Use 'localhost' if you have an fully configured SMTP
+# server running on this host. Otherwise specify the hostname of a working
+# SMTP submission service.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_SMTP_HOST
+VOMS_ADMIN_SMTP_HOST=hostname
+
+# E-mail address that is used to send notification mails
+# from the VOMS-admin.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_MAIL
+VOMS_ADMIN_MAIL=mail
+
+# Specifies the oracle long connection string.
+# Uncomment this variable if needed.
+# Example: (DESCRIPTION = (ADDRESS_LIST = (ADDRESS = (PROTOCOL = TCP)
+#          (HOST = lxfs5502.cern.ch)(PORT = 1521)) ) (CONNECT_DATA =
+#          (SERVICE_NAME = egee102d.cern.ch)))
+# VO_<vo_name>_VOMS_ADMIN_ORACLE_CONNECTION_STRING
+# VOMS_ADMIN_ORACLE_CONNECTION_STRING=mystring
+
+# The UNIX group that Tomcat is run under
+# voms admin default is tomcat 5
+# VOMS_ADMIN_TOMCAT_GROUP=new_value
+
+
+# The UNIX group that the VOMS core service is run under
+# voms admin default is voms
+# VOMS_ADMIN_VOMS_GROUP=new_value
+

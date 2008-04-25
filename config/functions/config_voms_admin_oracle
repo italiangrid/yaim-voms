@@ -1,0 +1,152 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright 
+# holders.  
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+#
+#    http://www.apache.org/licenses/LICENSE-2.0 
+#
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS 
+# OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+##############################################################################
+#
+# NAME : 	    config_voms_admin_oracle
+#
+# DESCRIPTION : This function configures the voms admin for oracle.
+ 
+# AUTHORS :     yaim-contact@cern.ch
+#
+# NOTES : 
+#
+# YAIM MODULE:  glite-yaim-voms
+#                 
+##############################################################################
+
+config_voms_admin_oracle_check () {
+
+requires $1 VOS VO__VOMS_ADMIN_PORT VO__VOMS_ADMIN_DB_NAME VO__VOMS_ADMIN_DB_USER \ 
+            VO__VOMS_ADMIN_DB_USER_PASSWORD 
+
+if [ ! "VOMS_ADMIN_HOSTNAME" ]; then requires VO__VOMS_ADMIN_HOSTNAME fi
+if [ ! "VOMS_ADMIN_CERT" ]; then requires VO__VOMS_ADMIN_CERT fi
+if [ ! "VOMS_ADMIN_DB_HOST" ]; then requires VO__VOMS_ADMIN_DB_HOST fi
+if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then requires VO__VOMS_ADMIN_SMTP_HOST fi
+if [ ! "VOMS_ADMIN_MAIL" ]; then requires VO__VOMS_ADMIN_MAIL fi
+if [ ! "VOMS_ADMIN_ORACLE_CONNECTION_STRING" ]; then requires VO__VOMS_ADMIN_ORACLE_CONNECTION_STRING fi
+
+}
+
+config_voms_admin_oracle_setenv () {
+
+
+}
+
+config_voms_admin_oracle () {
+
+if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" }; then
+
+for vo in ${VOS}; do
+
+  yaimlog DEBUG "Configure mandatory parameters"
+
+  VO=`echo ${vo} | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+  for i in (VOMS_ADMIN_HOSTNAME VOMS_ADMIN_CERT VOMS_ADMIN_DB_HOST VOMS_ADMIN_SMTP_HOST VOMS_ADMIN_MAIL VOMS_ADMIN_ORACLE_PORT VOMS_ADMIN_DEPLOY_DATABASE VOMS_ADMIN_WEB_REGISTRATION VOMS_ADMIN_REQUEST_SCHEDULER VOMS_ADMIN_ORACLE_CONNECTION_STRING ); do
+    value=get_vo_param ${vo} $i
+    if [ if [ "x${value}" = "x" ]; then
+      VAR_$i=$value
+    else
+      VAR_$i=`eval echo "\\$VO_${VO}_$i"`
+    fi
+  done
+ 
+  options=" --vo ${vo} \
+            --dbtype "oracle" \
+            --dbname `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_NAME"` \
+            --dbusername `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER"` \
+            --dbpassword `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER_PASSWORD" \
+            --dbhost ${VAR_VOMS_ADMIN_DB_HOST} \
+            --dbport ${VAR_VOMS_ADMIN_ORACLE_PORT} \
+            --port `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_PORT"` \
+            --smtp-host ${VAR_VOMS_ADMIN_SMTP_HOST}\
+            --mail-from ${VOMS_ADMIN_MAIL} \
+            --admincert ${VAR_VOMS_ADMIN_CERT} \
+
+  yaimlog DEBUG "Configure optional parameters"
+            
+  if [ "x${VAR_VOMS_ADMIN_DEPLOY_DATABASE}" == "xno" ]; then
+    options=echo "${options} --skip-database"
+  else
+    options=echo "${options} --deploy-database"
+  fi
+
+  if [ "x${VAR_VOMS_ADMIN_WEB_REGISTRATION}" == "xyes" ]; then
+    options=echo "${options} --disable-webui-requests"
+  fi 
+
+  if [ "x${VOMS_ADMIN_VERBOSE}" == "xyes" ]; then
+    options=echo "${options} --verbose"
+  fi
+
+  if [ -n "${VOMS_ADMIN_TOMCAT_GROUP}" ]; then
+    options=echo "${options} --tomcat-group ${VOMS_ADMIN_TOMCAT_GROUP}"
+  fi
+
+  if [ -n "${VOMS_ADMIN_VOMS_GROUP}" ]; then
+    options=echo "${options} --voms-group ${VOMS_ADMIN_VOMS_GROUP}"
+  fi
+
+  if [ -n "${VAR_VOMS_ADMIN_VOMS_GROUP}" ]; then
+    options=echo "${options} --oracle-conn-string ${VAR_VOMS_ADMIN_ORACLE_CONNECTION_STRING}"
+    yaimlog DEBUG "Create the tnsnames.ora file"
+    if [ -d ${GLITE_LOCATION}/etc/voms ]; then
+      mkdir -p ${GLITE_LOCATION}/etc/voms
+    fi
+    echo "${VAR_VOMS_ADMIN_VOMS_GROUP}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+  fi
+ 
+  yaimlog INFO "The options of the command are ${options}"  
+  # yaimlog DEBUG "Configure voms-admin"
+  # ${GLITE_LOCATION}/sbin/voms-admin-configure install ${options}
+
+  yaimlog DEBUG "Configure OCI support"
+  if [ -n "${VAR_VOMS_ADMIN_VOMS_GROUP}" ]; then
+    mv ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties.old
+    cat ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties.old sed \
+	-e "s#^jdbc.URL .*#jdbc.URL jdbc:oracle:oci:`echo -e \"${VAR_VOMS_ADMIN_VOMS_GROUP}\"`#" \
+        > ${GLITE_LOCATION_VAR}/etcvoms-admin/${vo}/voms.database.properties
+  fi
+  yaimlog DEBUG "Configure the request scheduler"
+
+  if [ -n "x${VAR_VOMS_ADMIN_REQUEST_SCHEDULER}" == "xno" ]; then
+    echo "voms.complete.requests.expire.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.incomplete.requests.time.out.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.expire.task.period.hours 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.timeout.task.period.hours 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.purge.task.period.seconds 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+  else
+    echo "voms.complete.requests.expire.after 60" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.incomplete.requests.time.out.after 30" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.expire.task.period.hours 24" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.timeout.task.period.hours 24" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.purge.task.period.seconds 2800" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+  fi
+
+  yaimlog DEBUG "Start voms-admin"
+  ${GLITE_LOCATION}/etc/init.d/voms-admin start
+
+else
+
+  yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=no" 
+
+fi # VOMS_ADMIN_INSTALL=yes
+
+}
+
+

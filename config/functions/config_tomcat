@@ -1,0 +1,153 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright 
+# holders.  
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+#
+#    http://www.apache.org/licenses/LICENSE-2.0 
+#
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS 
+# OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+##############################################################################
+#
+# NAME : 	config_tomcat
+#
+# DESCRIPTION : This function configures a secure tomcat.
+#
+# AUTHORS :     Akos.Frohner@cern.ch
+#
+# NOTES : 
+#
+# YAIM MODULE:  glite-yaim-voms
+#                 
+##############################################################################
+
+config_tomcat() {
+
+
+yaimlog DEBUG "Find tomcat"
+
+
+yaimlog DEBUG "system default"
+[ -r /etc/tomcat5/tomcat5.conf ] && source /etc/tomcat5/tomcat5.conf
+yaimlog DEBUG "RedHat settings"
+[ -r /etc/sysconfig/tomcat5 ] && source /etc/sysconfig/tomcat5
+yaimlog DEBUG "Debian settings"
+[ -r /etc/default/tomcat5 ] && source /etc/default/tomcat5
+
+yaimlog DEBUG "Find Tomcat's webapps dir"
+if [ ! -d "${CATALINA_BASE}/conf" ]; then
+    CATALINA_BASE=${CATALINA_HOME}
+fi
+if [ ! -d "${CATALINA_BASE}/conf" ]; then
+    CATALINA_BASE="/var/tomcat5"
+fi
+if [ ! -d "${CATALINA_BASE}/conf" ]; then
+    CATALINA_BASE="/var/lib/tomcat5"
+fi
+if [ ! -d "${CATALINA_BASE}/conf" ]; then
+    yaimlog ABORT "ERROR: Could not find CATALINA_BASE"
+    exit 1
+fi
+if [ ! -d "$CATALINA_BASE/conf/Catalina/localhost" ]; then
+    yaimlog ABORT "ERROR: non default Tomcat installation, where the webapp "
+    yaimlog ABORT " configuration directory does not exists: "
+    yaimlog ABORT " $CATALINA_BASE/conf/Catalina/localhost"
+    exit 1
+fi
+
+
+yaimlog DEBUG "Check hostcert exists"
+
+if [ ! -r /etc/grid-security/hostcert.pem ]; then
+   yaimlog ABORT "ERROR: Cannot read /etc/grid-security/hostcert.pem."
+   yaimlog ABORT "       Tomcat web-service requires a host certificate/key pair."
+   exit 1
+fi
+if [ ! -r /etc/grid-security/hostkey.pem ]; then
+   yaimlog ABORT "ERROR: Cannot read /etc/grid-security/hostkey.pem."
+   yaimlog ABORT "       Tomcat web-service requires a host certificate/key pair."
+   exit 1
+fi
+
+yaimlog DEBUG "Check it's not expired"
+openssl x509 -checkend 0 -in /etc/grid-security/hostcert.pem > /dev/null 2>&1
+if [ $? -eq 1 ]; then
+   openssl x509 -text -in /etc/grid-security/hostcert.pem
+   yaimlog ABORT "ERROR: Hostcert has expired!"
+   exit 1
+fi
+
+id -u $TOMCAT_USER > /dev/null 2>&1
+if [ $? -ne 0 ] ; then
+   yaimlog ABORT "Tomcat configured to use user $TOMCAT_USER but user does not exist!"
+   exit -1
+fi
+			
+yaimlog DEBUG "Copy them to the correct place"
+yaimlog INFO "Copying hostcert to /etc/grid-security/tomcat-cert.pem for $TOMCAT_USER:root......"
+cp -f /etc/grid-security/hostcert.pem /etc/grid-security/tomcat-cert.pem
+yaimlog INFO "Copying hostkey to /etc/grid-security/tomcat-key.pem for $TOMCAT_USER:root..."
+cp -f /etc/grid-security/hostkey.pem /etc/grid-security/tomcat-key.pem
+chown $TOMCAT_USER:root /etc/grid-security/tomcat-cert.pem
+chown $TOMCAT_USER:root /etc/grid-security/tomcat-key.pem
+chmod 644 /etc/grid-security/tomcat-cert.pem
+chmod 400 /etc/grid-security/tomcat-key.pem
+
+
+yaimlog DEBUG "Configure the tomcat server itself"
+
+
+yaimlog DEBUG "Replace server.xml with the one defining the secure connector"
+if [ -e /etc/tomcat5/server.xml.original.glite.backup ]; then
+   yaimlog INFO "Assuming /etc/tomcat5/server.xml is already configured.."
+else
+   yaimlog INFO "Replacing the tomcat5 /etc/tomcat5/server.xml..."
+   cp -f /etc/tomcat5/server.xml /etc/tomcat5/server.xml.original.glite.backup
+   cat > /etc/tomcat5/server.xml << EOT
+<Server port="8005" shutdown="SHUTDOWN">
+  <Service name="Catalina">
+
+    <Connector port="8443"
+               maxThreads="150" minSpareThreads="25" maxSpareThreads="75"
+               enableLookups="false" disableUploadTimeout="true"
+               acceptCount="100" debug="0" scheme="https" secure="true"
+               sSLImplementation="org.glite.security.trustmanager.tomcat.TMSSLImplementation"
+               sslCAFiles="/etc/grid-security/certificates/*.0"
+               crlFiles="/etc/grid-security/certificates/*.r0"
+               sslCertFile="/etc/grid-security/tomcat-cert.pem"
+               sslKey="/etc/grid-security/tomcat-key.pem"
+               log4jConfFile="/etc/tomcat5/log4j-trustmanager.properties"
+               clientAuth="true" sslProtocol="TLS" />
+
+    <Engine name="Catalina" defaultHost="localhost">
+      <Host name="localhost" appBase="webapps" />
+    </Engine>
+  </Service>
+</Server>
+EOT
+chown $TOMCAT_USER:$TOMCAT_USER /etc/tomcat5/server.xml
+fi
+
+yaimlog DEBUG "Copy log4j-trustmanager.properties into place"
+cp -f /opt/glite/etc/glite-security-trustmanager/log4j-trustmanager.properties /etc/tomcat5/
+chown $TOMCAT_USER:$TOMCAT_USER /etc/tomcat5/log4j-trustmanager.properties
+
+yaimlog INFO "Copying trustmanager deps to tomcat server lib directory.." 
+# log4j
+build-jar-repository /var/lib/tomcat5/server/lib log4j
+# bouncy castle
+ln -fs /usr/share/java-ext/bouncycastle-jdk1.5/bcprov.jar /var/lib/tomcat5/server/lib/bcprov.jar
+ln -fs ${GLITE_LOCATION}/share/java/glite-security-util-java.jar /var/lib/tomcat5/server/lib/
+ln -fs ${GLITE_LOCATION}/share/java/glite-security-trustmanager.jar /var/lib/tomcat5/server/lib/
+
+
+}
+
