@@ -75,7 +75,9 @@ yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
 
 config_voms_admin_oracle () {
 
-if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" }; then
+yaimlog DEBUG "Installation of voms-admin: VOMS_ADMIN_INSTALL=${VOMS_ADMIN_INSTALL}"
+
+if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
 
 for vo in ${VOS}; do
 
