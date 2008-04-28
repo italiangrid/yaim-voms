@@ -70,6 +70,8 @@ if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
   mkdir -p ${GLITE_LOCATION}/etc/voms
 fi
 yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
+yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
+yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
 
 }
 
@@ -84,35 +86,29 @@ for vo in ${VOS}; do
   yaimlog DEBUG "Configure mandatory parameters"
 
   VO=`echo ${vo} | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
-  vars=(VOMS_ADMIN_HOSTNAME 
-        VOMS_ADMIN_CERT 
-        VOMS_ADMIN_DB_HOST 
-        VOMS_ADMIN_SMTP_HOST 
-        VOMS_ADMIN_MAIL
-        VOMS_ADMIN_ORACLE_PORT 
-        VOMS_ADMIN_DEPLOY_DATABASE 
-        VOMS_ADMIN_WEB_REGISTRATION
-        VOMS_ADMIN_REQUEST_SCHEDULER 
-        VOMS_ADMIN_ORACLE_CONNECTION_STRING) 
+  vars="VOMS_ADMIN_HOSTNAME VOMS_ADMIN_CERT VOMS_ADMIN_DB_HOST VOMS_ADMIN_SMTP_HOST VOMS_ADMIN_MAIL VOMS_ADMIN_ORACLE_PORT VOMS_ADMIN_DEPLOY_DATABASE        VOMS_ADMIN_WEB_REGISTRATION VOMS_ADMIN_REQUEST_SCHEDULER VOMS_ADMIN_ORACLE_CONNECTION_STRING"
+  yaimlog DEBUG "Processing variables ${vars}"
   for i in ${vars}; do
-    value=get_vo_param ${vo} $i
-    if [ "x${value}" = "x" ]; then
+    yaimlog DEBUG "Processing variable $i..."
+    value=`get_vo_param ${vo} $i`
+    if [ "x${value}" != "x" ]; then
       VAR_$i=$value
     else
-      VAR_$i=`eval echo "\\$VO_${VO}_$i"`
+      VAR_$i=`eval echo "\\$$i"`
     fi
+    yaimlog DEBUG "VAR_$i is `eval echo "\\$VAR_$i"`"
   done
  
   options=" --vo ${vo} \
             --dbtype "oracle" \
-            --dbname `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_NAME"` \
-            --dbusername `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER"` \
-            --dbpassword `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER_PASSWORD"` \
+            --dbname `eval echo "\\$VO_${VO}_VOMS_ADMIN_DB_NAME"` \
+            --dbusername `eval echo "\\$VO_${VO}_VOMS_ADMIN_DB_USER"` \
+            --dbpassword `eval echo "\\$VO_${VO}_VOMS_ADMIN_DB_USER_PASSWORD"` \
             --dbhost ${VAR_VOMS_ADMIN_DB_HOST} \
             --dbport ${VAR_VOMS_ADMIN_ORACLE_PORT} \
-            --port `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_PORT"` \
+            --port `eval echo "\\$VO_${VO}_VOMS_ADMIN_PORT"` \
             --smtp-host ${VAR_VOMS_ADMIN_SMTP_HOST}\
-            --mail-from ${VOMS_ADMIN_MAIL} \
+            --mail-from ${VAR_VOMS_ADMIN_MAIL} \
             --admincert ${VAR_VOMS_ADMIN_CERT}"
 
   yaimlog DEBUG "Configure optional parameters"
@@ -161,10 +157,10 @@ for vo in ${VOS}; do
   echo "JAVA_OPTS="-Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
   echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/${VOMS_ADMIN_ORACLE_CLIENT}" >> ${CATALINA_HOME}/conf/tomcat5.conf
   echo "export TNS_ADMIN="${GLITE_LOCATION}/etc/voms" >> ${CATALINA_HOME}/conf/tomcat5.conf
-  cp ${VOMS_ADMIN_ORACLE_CLIENT}/lib/ojdbc14.jar ${{CATALINA_HOME}/common/lib/.
+  cp ${VOMS_ADMIN_ORACLE_CLIENT}/lib/ojdbc14.jar ${CATALINA_HOME}/common/lib/.
 
   yaimlog DEBUG "Configure the request scheduler"
-  if [ -n "x${VAR_VOMS_ADMIN_REQUEST_SCHEDULER}" == "xno" ]; then
+  if [ "x${VAR_VOMS_ADMIN_REQUEST_SCHEDULER}" == "xno" ]; then
     echo "voms.complete.requests.expire.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
     echo "voms.incomplete.requests.time.out.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
     echo "voms.request.expire.task.period.hours 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties

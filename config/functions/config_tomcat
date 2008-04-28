@@ -29,6 +29,12 @@
 #                 
 ##############################################################################
 
+config_tomcat_setenv () {
+
+yaimgridenv_set CATALINA_HOME ${CATALINA_HOME}
+
+}
+
 config_tomcat() {
 
 
