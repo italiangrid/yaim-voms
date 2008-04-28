@@ -32,19 +32,44 @@
 config_voms_admin_oracle_check () {
 
 requires $1 VOS VO__VOMS_ADMIN_PORT VO__VOMS_ADMIN_DB_NAME VO__VOMS_ADMIN_DB_USER \ 
-            VO__VOMS_ADMIN_DB_USER_PASSWORD 
+            VO__VOMS_ADMIN_DB_USER_PASSWORD VOMS_ADMIN_ORACLE_CLIENT
 
-if [ ! "VOMS_ADMIN_HOSTNAME" ]; then requires VO__VOMS_ADMIN_HOSTNAME fi
-if [ ! "VOMS_ADMIN_CERT" ]; then requires VO__VOMS_ADMIN_CERT fi
-if [ ! "VOMS_ADMIN_DB_HOST" ]; then requires VO__VOMS_ADMIN_DB_HOST fi
-if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then requires VO__VOMS_ADMIN_SMTP_HOST fi
-if [ ! "VOMS_ADMIN_MAIL" ]; then requires VO__VOMS_ADMIN_MAIL fi
-if [ ! "VOMS_ADMIN_ORACLE_CONNECTION_STRING" ]; then requires VO__VOMS_ADMIN_ORACLE_CONNECTION_STRING fi
-
+if [ ! "VOMS_ADMIN_HOSTNAME" ]; then 
+  requires $1 VO__VOMS_ADMIN_HOSTNAME 
+fi
+if [ ! "VOMS_ADMIN_CERT" ]; then 
+  requires $1 VO__VOMS_ADMIN_CERT 
+fi
+if [ ! "VOMS_ADMIN_DB_HOST" ]; then 
+  requires $1 VO__VOMS_ADMIN_DB_HOST 
+fi
+if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then 
+  requires $1 VO__VOMS_ADMIN_SMTP_HOST 
+fi
+if [ ! "VOMS_ADMIN_MAIL" ]; then 
+  requires $1 VO__VOMS_ADMIN_MAIL 
+fi
+if [ ! "VOMS_ADMIN_ORACLE_CONNECTION_STRING" ]; then 
+  requires $1 VO__VOMS_ADMIN_ORACLE_CONNECTION_STRING 
+fi
 }
 
 config_voms_admin_oracle_setenv () {
 
+if [ ! -d ${VOMS_ADMIN_ORACLE_CLIENT} ]; then
+  yaimlog ERROR "The Oracle InstantClient cannot be found at ${VOMS_ADMIN_ORACLE_CLIENT}"
+  yaimlog ERROR "Please, check the definition of VOMS_ADMIN_ORACLE_CLIENT or install the Oracle InstantClient if it's not installed"
+  yestr ${YEX_NOSUCHFILE}
+  yaimlog ERROR "${YERRORSTR}"
+  exit ${YEX_NOSUCHFILE}
+fi
+
+yaimgridenv_append LD_LIBRARY_PATH ${VOMS_ADMIN_ORACLE_CLIENT} 
+
+if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
+  mkdir -p ${GLITE_LOCATION}/etc/voms
+fi
+yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
 
 }
 
@@ -57,9 +82,19 @@ for vo in ${VOS}; do
   yaimlog DEBUG "Configure mandatory parameters"
 
   VO=`echo ${vo} | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
-  for i in (VOMS_ADMIN_HOSTNAME VOMS_ADMIN_CERT VOMS_ADMIN_DB_HOST VOMS_ADMIN_SMTP_HOST VOMS_ADMIN_MAIL VOMS_ADMIN_ORACLE_PORT VOMS_ADMIN_DEPLOY_DATABASE VOMS_ADMIN_WEB_REGISTRATION VOMS_ADMIN_REQUEST_SCHEDULER VOMS_ADMIN_ORACLE_CONNECTION_STRING ); do
+  vars=(VOMS_ADMIN_HOSTNAME 
+        VOMS_ADMIN_CERT 
+        VOMS_ADMIN_DB_HOST 
+        VOMS_ADMIN_SMTP_HOST 
+        VOMS_ADMIN_MAIL
+        VOMS_ADMIN_ORACLE_PORT 
+        VOMS_ADMIN_DEPLOY_DATABASE 
+        VOMS_ADMIN_WEB_REGISTRATION
+        VOMS_ADMIN_REQUEST_SCHEDULER 
+        VOMS_ADMIN_ORACLE_CONNECTION_STRING) 
+  for i in ${vars}; do
     value=get_vo_param ${vo} $i
-    if [ if [ "x${value}" = "x" ]; then
+    if [ "x${value}" = "x" ]; then
       VAR_$i=$value
     else
       VAR_$i=`eval echo "\\$VO_${VO}_$i"`
@@ -70,13 +105,13 @@ for vo in ${VOS}; do
             --dbtype "oracle" \
             --dbname `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_NAME"` \
             --dbusername `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER"` \
-            --dbpassword `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER_PASSWORD" \
+            --dbpassword `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER_PASSWORD"` \
             --dbhost ${VAR_VOMS_ADMIN_DB_HOST} \
             --dbport ${VAR_VOMS_ADMIN_ORACLE_PORT} \
             --port `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_PORT"` \
             --smtp-host ${VAR_VOMS_ADMIN_SMTP_HOST}\
             --mail-from ${VOMS_ADMIN_MAIL} \
-            --admincert ${VAR_VOMS_ADMIN_CERT} \
+            --admincert ${VAR_VOMS_ADMIN_CERT}"
 
   yaimlog DEBUG "Configure optional parameters"
             
@@ -102,28 +137,31 @@ for vo in ${VOS}; do
     options=echo "${options} --voms-group ${VOMS_ADMIN_VOMS_GROUP}"
   fi
 
-  if [ -n "${VAR_VOMS_ADMIN_VOMS_GROUP}" ]; then
+  if [ -n "${VAR_VOMS_ADMIN_ORACLE_CONNECTION_STRING}" ]; then
     options=echo "${options} --oracle-conn-string ${VAR_VOMS_ADMIN_ORACLE_CONNECTION_STRING}"
     yaimlog DEBUG "Create the tnsnames.ora file"
-    if [ -d ${GLITE_LOCATION}/etc/voms ]; then
-      mkdir -p ${GLITE_LOCATION}/etc/voms
-    fi
-    echo "${VAR_VOMS_ADMIN_VOMS_GROUP}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+    echo "${VAR_VOMS_ADMIN_ORACLE_CONNECTION_STRING}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
   fi
- 
-  yaimlog INFO "The options of the command are ${options}"  
-  # yaimlog DEBUG "Configure voms-admin"
-  # ${GLITE_LOCATION}/sbin/voms-admin-configure install ${options}
+
+  yaimlog DEBUG "The options of the command are ${options}"  
+  yaimlog DEBUG "Configure voms-admin"
+  ${GLITE_LOCATION}/sbin/voms-admin-configure install ${options}
 
   yaimlog DEBUG "Configure OCI support"
   if [ -n "${VAR_VOMS_ADMIN_VOMS_GROUP}" ]; then
     mv ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties.old
     cat ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties.old sed \
-	-e "s#^jdbc.URL .*#jdbc.URL jdbc:oracle:oci:`echo -e \"${VAR_VOMS_ADMIN_VOMS_GROUP}\"`#" \
-        > ${GLITE_LOCATION_VAR}/etcvoms-admin/${vo}/voms.database.properties
+	-e "s#^jdbc.URL .*#jdbc.URL jdbc:oracle:oci:`echo -e \"${VAR_VOMS_ADMIN_ORACLE_CONNECTION_STRING}\"`#" \
+        > ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties
   fi
-  yaimlog DEBUG "Configure the request scheduler"
 
+  yaimlog DEBUG "Setting OCI support for tomcat"
+  echo "JAVA_OPTS="-Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/${VOMS_ADMIN_ORACLE_CLIENT}" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  echo "export TNS_ADMIN="${GLITE_LOCATION}/etc/voms" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  cp ${VOMS_ADMIN_ORACLE_CLIENT}/lib/ojdbc14.jar ${{CATALINA_HOME}/common/lib/.
+
+  yaimlog DEBUG "Configure the request scheduler"
   if [ -n "x${VAR_VOMS_ADMIN_REQUEST_SCHEDULER}" == "xno" ]; then
     echo "voms.complete.requests.expire.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
     echo "voms.incomplete.requests.time.out.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
@@ -140,6 +178,8 @@ for vo in ${VOS}; do
 
   yaimlog DEBUG "Start voms-admin"
   ${GLITE_LOCATION}/etc/init.d/voms-admin start
+
+done #VOS
 
 else
 
