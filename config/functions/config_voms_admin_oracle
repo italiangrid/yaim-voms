@@ -62,7 +62,7 @@ if [ ! -d ${VOMS_ADMIN_ORACLE_CLIENT} ]; then
   exit ${YEX_NOSUCHFILE}
 fi
 
-yaimgridenv_append LD_LIBRARY_PATH ${VOMS_ADMIN_ORACLE_CLIENT} 
+yaimgridenv_append LD_LIBRARY_PATH ${VOMS_ADMIN_ORACLE_CLIENT}/lib 
 
 if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
   mkdir -p ${GLITE_LOCATION}/etc/voms
@@ -114,10 +114,12 @@ for vo in ${VOS}; do
   j=0
   for i in ${vars}; do
     value=`get_vo_param ${vo} $i`
-    if [ "x${value}" != "x" ]; then
-      command="$command --${options[$j]} $value"
-    else
-      command="$command --${options[$j]} ${!i}"
+    if [ "x${value}" == "x" ]; then
+      value=${!i}
+    fi 
+    command="$command --${options[$j]} $value"
+    if [ $i == "VOMS_ADMIN_DB_NAME" ]; then
+      db_name=$value
     fi
     j=`expr $j + 1`
   done
@@ -171,12 +173,12 @@ for vo in ${VOS}; do
   if [ -n "${value}" ]; then
     oci=${value}
     yaimlog DEBUG "Create the tnsnames.ora file"
-    echo "${value}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+    echo "${db_name}=${value}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
   else
     if [ -n "${VOMS_ADMIN_ORACLE_CONNECTION_STRING}" ]; then
       oci=${VOMS_ADMIN_ORACLE_CONNECTION_STRING}
       yaimlog DEBUG "Create the tnsnames.ora file"
-      echo "${VOMS_ADMIN_ORACLE_CONNECTION_STRING}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+      echo "${db_name}=${VOMS_ADMIN_ORACLE_CONNECTION_STRING}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
     else
       oci=""
     fi
@@ -186,19 +188,11 @@ for vo in ${VOS}; do
   yaimlog DEBUG "Configure voms-admin"
   ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
 
-  yaimlog DEBUG "Configure OCI support"
-  if [ -n "${oci}" ]; then
-    mv ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties.old
-    cat ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties.old sed \
-	-e "s#^jdbc.URL .*#jdbc.URL jdbc:oracle:oci:`echo -e \"${oci}\"`#" \
-        > ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.database.properties
-  fi
-
   yaimlog DEBUG "Setting OCI support for tomcat"
   if grep -q "^JAVA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
     cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^JAVA_OPTS .*#JAVA_OPTS=\"$JAVA_OPTS -Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib\"#" \
-    > ${CATALINA_HOME}/conf/tomcat5.conf
+    >> ${CATALINA_HOME}/conf/tomcat5.conf
   else
     echo "JAVA_OPTS=\"$JAVA_OPTS -Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
@@ -207,16 +201,12 @@ for vo in ${VOS}; do
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
     cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \ 
     "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib#" \
-    > ${CATALINA_HOME}/conf/tomcat5.conf
+    >> ${CATALINA_HOME}/conf/tomcat5.conf
   else
     echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
-  if grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
-    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
-    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^export TNS_ADMIN .*#export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"#" \
-    > ${CATALINA_HOME}/conf/tomcat5.conf
-  else
+  if ! grep -q "TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
     echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
   
@@ -236,7 +226,7 @@ for vo in ${VOS}; do
   if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
     cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^CATALINA_OPTS=.*#CATALINA_OPTS=\"${CATALINA_OPTS}\"#" \
-    > ${CATALINA_HOME}/conf/tomcat5.conf
+    >> ${CATALINA_HOME}/conf/tomcat5.conf
   else
     echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
@@ -275,7 +265,7 @@ for vo in ${VOS}; do
   fi
 
   yaimlog DEBUG "Start voms-admin"
-  ${GLITE_LOCATION}/etc/init.d/voms-admin start
+  ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
 
 done #VOS
 
