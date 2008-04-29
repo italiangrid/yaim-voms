@@ -44,18 +44,11 @@ VO_<vo_name>_VOMS_ADMIN_DB_USER=user_name
 # Password of database user account.
 VO_<vo_name>_VOMS_ADMIN_DB_USER_PASSWORD=password
 
-# The full hostname of the VOMS server responsible for each VO.
-# be exactly one entry for each VO
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_HOSTNAME
-VOMS_ADMIN_HOSTNAME=hostname
-
 # The path of the certificate file (in pem format) of an initial VO administrator.
 # The VO will be set up so that this user has full VO administration
 # privileges.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_VOMS_ADMIN_CERT
-
 VOMS_ADMIN_CERT=user_certificate
 
 # Hostname of the database server. Put 'localhost'
@@ -90,8 +83,6 @@ VOMS_ADMIN_MAIL=mail
 # voms admin default is tomcat 5
 # VOMS_ADMIN_TOMCAT_GROUP=new_value
 
-
 # The UNIX group that the VOMS core service is run under
 # voms admin default is voms
 # VOMS_ADMIN_VOMS_GROUP=new_value
-

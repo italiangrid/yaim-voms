@@ -71,7 +71,7 @@ VOMS_ADMIN_VERBOSE=yes
 # "Port number of the database server for oracle.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>__ORACLE_PORT
-VOMS_ADMIN_ORACLE_PORT=1521
+VOMS_ADMIN_ORACLE_PORT=10121
 
 # Minimum number of connections to be opened per VO.
 VOMS_ADMIN_ORACLE_MIN_CONNECTIONS=1
