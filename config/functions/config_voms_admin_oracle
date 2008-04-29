@@ -68,6 +68,7 @@ if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
   mkdir -p ${GLITE_LOCATION}/etc/voms
 fi
 yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
+yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
 yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
 yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
 yaimgridenv_set VOMSORACLE_MIN_CONNECTION ${VOMS_ADMIN_ORACLE_MIN_CONNECTIONS}
@@ -204,10 +205,11 @@ for vo in ${VOS}; do
 
   if grep -q "^export LD_LIBRARY_PATH" ${CATALINA_HOME}/conf/tomcat5.conf; then
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
-    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}#" \
+    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \ 
+    "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib#" \
     > ${CATALINA_HOME}/conf/tomcat5.conf
   else
-    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
   if grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
