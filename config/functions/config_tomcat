@@ -69,6 +69,9 @@ if [ ! -d "$CATALINA_BASE/conf/Catalina/localhost" ]; then
     exit 1
 fi
 
+yaimlog DEBUG "Ensure permissions and ownerships are correct"
+chown -R ${TOMCAT_USER}:${TOMCAT_USER} /etc/tomcat5
+
 
 yaimlog DEBUG "Check hostcert exists"
 
@@ -153,6 +156,10 @@ build-jar-repository /var/lib/tomcat5/server/lib log4j
 ln -fs /usr/share/java-ext/bouncycastle-jdk1.5/bcprov.jar /var/lib/tomcat5/server/lib/bcprov.jar
 ln -fs ${GLITE_LOCATION}/share/java/glite-security-util-java.jar /var/lib/tomcat5/server/lib/
 ln -fs ${GLITE_LOCATION}/share/java/glite-security-trustmanager.jar /var/lib/tomcat5/server/lib/
+
+/etc/rc.d/init.d/tomcat5 restart
+/sbin/chkconfig --add tomcat5
+/sbin/chkconfig tomcat5 on
 
 
 }
