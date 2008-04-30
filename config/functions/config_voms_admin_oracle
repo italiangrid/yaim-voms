@@ -190,25 +190,32 @@ for vo in ${VOS}; do
 
   yaimlog DEBUG "Setting OCI support for tomcat"
   if grep -q "^JAVA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    yaimlog DEBUG "JAVA_OPTS exist in tomcat config file"
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
     cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^JAVA_OPTS .*#JAVA_OPTS=\"$JAVA_OPTS -Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib\"#" \
     >> ${CATALINA_HOME}/conf/tomcat5.conf
+    yaimlog DEBUG "the config file *********************"
+    cat ${CATALINA_HOME}/conf/tomcat5.conf
   else
+    yaimlog DEBUG "JAVA_OPTS doesn't exist"
     echo "JAVA_OPTS=\"$JAVA_OPTS -Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    yaimlog DEBUG "the config file *********************"
+    cat ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
   if grep -q "^export LD_LIBRARY_PATH" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    yaimlog DEBUG "exist in tomcat config file"
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
-    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \ 
-    "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib#" \
-    >> ${CATALINA_HOME}/conf/tomcat5.conf
+    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \
+    "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib#" >> ${CATALINA_HOME}/conf/tomcat5.conf
   else
+    yaimlog DEBUG "doesn't exist in tomcat config file"
     echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
-  if ! grep -q "TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
-    echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
-  fi
+#  if ! grep -q "TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
+#    echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+#  fi
   
   if [ -f ${VOMS_ADMIN_ORACLE_CLIENT}/lib/ojdbc14.jar ]; then
     cp ${VOMS_ADMIN_ORACLE_CLIENT}/lib/ojdbc14.jar ${CATALINA_HOME}/common/lib/.
@@ -219,17 +226,17 @@ for vo in ${VOS}; do
     exit ${YEX_NOSUCHFILE}
   fi
 
-  yaimlog DEBUG "Configure Tomcat memory size"
-  MemSize=`free -m | awk '/^Mem/{if($2 <= 4096) printf "%i", $2/2; else print "2048";}'`
-  MemSize=${MemSize:-256}
-  CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=256m"
-  if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
-    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
-    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^CATALINA_OPTS=.*#CATALINA_OPTS=\"${CATALINA_OPTS}\"#" \
-    >> ${CATALINA_HOME}/conf/tomcat5.conf
-  else
-    echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
-  fi
+#  yaimlog DEBUG "Configure Tomcat memory size"
+#  MemSize=`free -m | awk '/^Mem/{if($2 <= 4096) printf "%i", $2/2; else print "2048";}'`
+#  MemSize=${MemSize:-256}
+#  CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=256m"
+#  if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
+#    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
+#    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^CATALINA_OPTS=.*#CATALINA_OPTS=\"${CATALINA_OPTS}\"#" \
+#    >> ${CATALINA_HOME}/conf/tomcat5.conf
+#  else
+#    echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+#  fi
 
   yaimlog DEBUG "Configure the request scheduler"
   value=`get_vo_param ${vo} VOMS_ADMIN_REQUEST_SCHEDULER`
