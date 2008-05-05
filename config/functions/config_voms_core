@@ -31,16 +31,68 @@
 
 config_voms_core_check () {
 
+requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT VOMS_DB_TYPE 
+
+if [ "x${VOMS_DB_TYPE" == "xoracle" ]; then
+  requires $1 VOMS_ORACLE_LIBRARY
+fi
+
+if [ "x${VOMS_DB_TYPE" == "xmysql" ]; then
+  requires $1 VOMS_MYSQL_LIBRARY
+fi
 
 }
 
 config_voms_core_setenv () {
 
+yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
+yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
+yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
 
 }
 
-config_voms_core_mysql () {
+config_voms_core () {
 
+if [ "x${VOMS_ADMIN_INSTALL}" == "xno" ]; then
+
+for vo in ${VOS}; do
+
+  yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
+
+  command=" --voms-vo ${vo} --db-type ${VOMS_DB_TYPE}"
+
+  vars="VOMS_DB_NAME
+        VOMS_DB_USER
+        VOMS_DB_USER_PASSWORD
+        VOMS_PORT"
+
+  options=(db
+           voms-name
+           voms-pwd
+           sqlloc
+           port)
+
+  yaimlog DEBUG "Building up the command"
+  j=0
+  for i in ${vars}; do
+    value=`get_vo_param ${vo} $i`
+    if [ "x${value}" == "x" ]; then
+      value=${!i}
+    fi
+    command="$command --${options[$j]} $value"
+    j=`expr $j + 1`
+  done
+
+  yaimlog DEBUG "The command is ${command}"
+  yaimlog DEBUG "Configure voms core for VO ${vo}"
+  ${GLITE_LOCATION}/libexec/voms/voms_install_db ${command}
+
+done #VOs
+
+fi #voms admin not installed
+
+yaimlog DEBUG "Start voms core"
+${GLITE_LOCATION}/etc/init.d/voms start
 
 }
 
