@@ -32,17 +32,17 @@
 # The port on the VOMS server listening for request for each VO
 # This is used in the vomses configuration file
 # By convention, port numbers are allocated starting with 15000
-VO_<vo_name>_VOMS_ADMIN_PORT=port_number
+VO_<vo_name>_VOMS_PORT=port_number
 
 # Database name to be used to store VOMS information.
 # Required on oracle installations, refers to the tns alias associated with the db.
-VO_<vo_name>_VOMS_ADMIN_DB_NAME=db_name
+VO_<vo_name>_VOMS_DB_NAME=db_name
 
 # Name of database user.
-VO_<vo_name>_VOMS_ADMIN_DB_USER=user_name
+VO_<vo_name>_VOMS_DB_USER=user_name
 
 # Password of database user account.
-VO_<vo_name>_VOMS_ADMIN_DB_USER_PASSWORD=password
+VO_<vo_name>_VOMS_DB_USER_PASSWORD=password
 
 # The path of the certificate file (in pem format) of an initial VO administrator.
 # The VO will be set up so that this user has full VO administration
