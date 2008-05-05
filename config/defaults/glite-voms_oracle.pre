@@ -39,7 +39,7 @@ GLITE_LOCATION_VARe="/var/glite"
 GLITE_LOCATION_LOGe="/var/log/glite"
 GLITE_LOCATION_TMP="/tmp/glite"
 
-
+VOMS_DB_TYPE=oracle
 
 ##############
 # VOMS_ADMIN #
