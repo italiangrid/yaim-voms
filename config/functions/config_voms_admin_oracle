@@ -85,9 +85,7 @@ if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
 
 for vo in ${VOS}; do
 
-  yaimlog DEBUG "Configure mandatory parameters"
-
-  VO=`echo ${vo} | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+  yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
 
   command=" --vo ${vo} --dbtype "oracle""
 
@@ -124,7 +122,7 @@ for vo in ${VOS}; do
     j=`expr $j + 1`
   done
   
-  yaimlog DEBUG "Configure optional parameters"
+  yaimlog DEBUG "Configure optional parameters for voms admin for VO ${vo}"
  
   value=`get_vo_param ${vo} VOMS_ADMIN_DEPLOY_DATABASE`
   if [ "x${value}" == "xno" ]; then 
@@ -185,7 +183,7 @@ for vo in ${VOS}; do
   fi
 
   yaimlog DEBUG "The command is ${command}"  
-  yaimlog DEBUG "Configure voms-admin"
+  yaimlog DEBUG "Configure voms-admin for VO ${vo}"
   ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
 
   yaimlog DEBUG "Setting OCI support for tomcat"
