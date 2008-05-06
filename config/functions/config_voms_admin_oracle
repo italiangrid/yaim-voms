@@ -32,7 +32,7 @@
 config_voms_admin_oracle_check () {
 
 # The following variables are declared always per VO
-requires $1 VOS VO__VOMS_ADMIN_DB_NAME VO__VOMS_ADMIN_DB_USER VO__VOMS_ADMIN_DB_USER_PASSWORD VO__VOMS_ADMIN_PORT
+requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT
 
 # The following variables can be defined per VOMS server or per VO
 if [ ! "VOMS_ADMIN_DB_HOST" ]; then 
@@ -89,12 +89,12 @@ for vo in ${VOS}; do
 
   command=" --vo ${vo} --dbtype "oracle""
 
-  vars="VOMS_ADMIN_DB_NAME 
-        VOMS_ADMIN_DB_USER 
-        VOMS_ADMIN_DB_USER_PASSWORD 
+  vars="VOMS_DB_NAME 
+        VOMS_DB_USER 
+        VOMS_DB_USER_PASSWORD 
         VOMS_ADMIN_DB_HOST 
         VOMS_ADMIN_ORACLE_PORT 
-        VOMS_ADMIN_PORT 
+        VOMS_PORT 
         VOMS_ADMIN_SMTP_HOST 
         VOMS_ADMIN_MAIL 
         VOMS_ADMIN_CERT"
@@ -116,7 +116,7 @@ for vo in ${VOS}; do
       value=${!i}
     fi 
     command="$command --${options[$j]} $value"
-    if [ $i == "VOMS_ADMIN_DB_NAME" ]; then
+    if [ $i == "VOMS_DB_NAME" ]; then
       db_name=$value
     fi
     j=`expr $j + 1`
