@@ -31,14 +31,29 @@
 
 config_voms_core_check () {
 
+if [ "x${VOMS_ADMIN_INSTALL}" == "xno" ]; then
+
 requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT VOMS_DB_TYPE 
+if [ $? -eq 1 ]; then
+  exit 1
+fi
 
 if [ "x${VOMS_DB_TYPE" == "xoracle" ]; then
   requires $1 VOMS_ORACLE_LIBRARY
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
 fi
 
 if [ "x${VOMS_DB_TYPE" == "xmysql" ]; then
   requires $1 VOMS_MYSQL_LIBRARY
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
+fi
+
+return $?
+
 fi
 
 }
