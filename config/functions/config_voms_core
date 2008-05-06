@@ -47,14 +47,14 @@ if [ ! "VOMS_CORE_TIMEOUT" ]; then
 fi
 
 # Library variables
-if [ "x${VOMS_DB_TYPE" == "xoracle" ]; then
+if [ "x${VOMS_DB_TYPE}" == "xoracle" ]; then
   requires $1 VOMS_ORACLE_LIBRARY
   if [ $? -eq 1 ]; then
     exit 1
   fi
 fi
 
-if [ "x${VOMS_DB_TYPE" == "xmysql" ]; then
+if [ "x${VOMS_DB_TYPE}" == "xmysql" ]; then
   requires $1 VOMS_MYSQL_LIBRARY
   if [ $? -eq 1 ]; then
     exit 1
