@@ -31,38 +31,14 @@
 
 config_voms_core_check () {
 
-if [ "x${VOMS_ADMIN_INSTALL}" == "xno" ]; then
+requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT VOMS_DB_TYPE 
 
-requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT VOMS_DB_TYPE
-if [ $? -eq 1 ]; then
-  exit 1
-fi
-
-# The following variables can be defined per VOMS server or per VO
-if [ ! "VOMS_CORE_TIMEOUT" ]; then
-  requires $1 VO__VOMS_CORE_TIMEOUT
-  if [ $? -eq 1 ]; then
-    exit 1
-  fi
-fi
-
-# Library variables
 if [ "x${VOMS_DB_TYPE}" == "xoracle" ]; then
   requires $1 VOMS_ORACLE_LIBRARY
-  if [ $? -eq 1 ]; then
-    exit 1
-  fi
 fi
 
 if [ "x${VOMS_DB_TYPE}" == "xmysql" ]; then
   requires $1 VOMS_MYSQL_LIBRARY
-  if [ $? -eq 1 ]; then
-    exit 1
-  fi
-fi
-
-return $?
-
 fi
 
 }
@@ -88,15 +64,13 @@ for vo in ${VOS}; do
   vars="VOMS_DB_NAME
         VOMS_DB_USER
         VOMS_DB_USER_PASSWORD
-        VOMS_PORT
-        VOMS_CORE_TIMEOUT"
+        VOMS_PORT"
 
   options=(db
            voms-name
            voms-pwd
            sqlloc
-           port
-           timeout)
+           port)
 
   yaimlog DEBUG "Building up the command"
   j=0
