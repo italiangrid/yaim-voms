@@ -33,23 +33,44 @@ config_voms_admin_oracle_check () {
 
 # The following variables are declared always per VO
 requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT
+if [ $? -eq 1 ]; then   
+    exit 1   
+fi 
 
 # The following variables can be defined per VOMS server or per VO
 if [ ! "VOMS_ADMIN_DB_HOST" ]; then 
   requires $1 VO__VOMS_ADMIN_DB_HOST 
+  if [ $? -eq 1 ]; then   
+    exit 1   
+  fi 
 fi
 if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then 
   requires $1 VO__VOMS_ADMIN_SMTP_HOST 
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
 fi
 if [ ! "VOMS_ADMIN_MAIL" ]; then 
   requires $1 VO__VOMS_ADMIN_MAIL 
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
 fi
 if [ ! "VOMS_ADMIN_CERT" ]; then
   requires $1 VO__VOMS_ADMIN_CERT
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
 fi
 
 # The following variables are declared by default but we check them too
 requires $1 VOMS_ADMIN_ORACLE_CLIENT VOMS_ADMIN_INSTALL
+if [ $? -eq 1 ]; then
+  exit 1
+fi
+
+return 0
+
 }
 
 config_voms_admin_oracle_setenv () {
