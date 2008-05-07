@@ -103,6 +103,6 @@ VOMS_ADMIN_ORACLE_CLIENT=/usr/lib/oracle/10.2.0.1/client
 # Tomcat #
 ##########
 
-CATALINA_HOME=/var/lib/tomcat5
+CATALINA_HOME=/usr/share/tomcat5
 
 TOMCAT_USER=${TOMCAT_USER:-tomcat}
