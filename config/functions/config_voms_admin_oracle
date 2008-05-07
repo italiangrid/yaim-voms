@@ -284,6 +284,7 @@ for vo in ${VOS}; do
   fi
 
   yaimlog DEBUG "Start voms-admin"
+  . ${INSTALL_ROOT}/glite/etc/profile.d/grid-env.sh
   ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
 
 done #VOS
