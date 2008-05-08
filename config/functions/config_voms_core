@@ -82,15 +82,13 @@ for vo in ${VOS}; do
   vars="VOMS_DB_NAME
         VOMS_DB_USER
         VOMS_DB_USER_PASSWORD
-        VOMS_PORT
-        VOMS_CORE_TIMEOUT"
+        VOMS_PORT"
 
   options=(db
            voms-name
            voms-pwd
            sqlloc
-           port
-           timeout)
+           port)
 
   yaimlog DEBUG "Building up the command"
   j=0
@@ -106,6 +104,16 @@ for vo in ${VOS}; do
   yaimlog DEBUG "The command is ${command}"
   yaimlog DEBUG "Configure voms core for VO ${vo}"
   ${GLITE_LOCATION}/libexec/voms/voms_install_db ${command}
+
+  value=`get_vo_param ${vo} VOMS_CORE_TIMEOUT`
+  if [ "x${value}" == "xyes" ]; then
+    timeout=${value}
+  else
+    timeout=${VOMS_CORE_TIMEOUT}
+  fi
+  echo "--timeout=${timeout}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+  voms_hostname=`hostname -f`
+  echo "--uri=${voms_hostname}"  >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
 done #VOs
 
