@@ -210,7 +210,8 @@ for vo in ${VOS}; do
       oci=""
     fi
   fi
-
+  
+  yaimlog INFO "LD_LIBRARY_PATH should contain the oracle library path: $LD_LIBRARY_PATH" 
   yaimlog DEBUG "The command is ${command}"  
   yaimlog DEBUG "Configure voms-admin for VO ${vo}"
   ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
@@ -289,6 +290,11 @@ for vo in ${VOS}; do
     echo "voms.request.timeout.task.period.hours 24" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
     echo "voms.request.purge.task.period.seconds 2800" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
   fi
+
+  yaimlog DEBUG "Start tomcat"
+  /etc/rc.d/init.d/tomcat5 restart
+  /sbin/chkconfig --add tomcat5
+  /sbin/chkconfig tomcat5 on
 
   yaimlog DEBUG "Start voms-admin"
   ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
