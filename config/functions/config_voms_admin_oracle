@@ -32,11 +32,11 @@
 config_voms_admin_oracle_check () {
 
 # Check whether oracle libraries are properly installed in ld.so.conf
-grep ${VOMS_ADMIN_ORACLE_CLIENT}/lib /etc/ld.so.conf
-if [ $? -eq 1 ]; then
-  echo ${VOMS_ADMIN_ORACLE_CLIENT}/lib >> /etc/ld.so.conf
-  /sbin/ldconfig
-fi
+#grep ${VOMS_ADMIN_ORACLE_CLIENT}/lib /etc/ld.so.conf
+#if [ $? -eq 1 ]; then
+#  echo ${VOMS_ADMIN_ORACLE_CLIENT}/lib >> /etc/ld.so.conf
+#  /sbin/ldconfig
+#fi
 
 # The following variables are declared always per VO
 requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT
@@ -224,13 +224,13 @@ for vo in ${VOS}; do
     echo "JAVA_OPTS=\"$JAVA_OPTS -Djava.library.path=${VOMS_ADMIN_ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
-#  if grep -q "^export LD_LIBRARY_PATH" ${CATALINA_HOME}/conf/tomcat5.conf; then
-#    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
-#    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \
-#    "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib#" >> ${CATALINA_HOME}/conf/tomcat5.conf
-#  else
-#    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
-#  fi
+  if grep -q "^export LD_LIBRARY_PATH" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
+    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \
+    "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib#" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  else
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${VOMS_ADMIN_ORACLE_CLIENT}/lib" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  fi
 
   if ! grep -q "TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
     echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
