@@ -1,0 +1,81 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright 
+# holders.  
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+#
+#    http://www.apache.org/licenses/LICENSE-2.0 
+#
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS 
+# OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+##############################################################################
+#
+# NAME : 	    config_voms_logrotate
+#
+# DESCRIPTION : This function configures the logrotate for voms.
+ 
+# AUTHORS :     yaim-contact@cern.ch
+#
+# NOTES : 
+#
+# YAIM MODULE:  glite-yaim-voms
+#                 
+##############################################################################
+
+config_voms_logrotate_check () {
+
+requires 1 VOS VOMS_CORE_LOGROTATE_PERIOD VOMS_CORE_LOGROTATE_LOGNUMBER
+return $?
+
+}
+
+config_voms_logrotate_setenv () {
+
+yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
+
+}
+
+config_voms_logrotate () {
+
+for vo in ${VOS}; do
+
+  file_name=/etc/logrotate.d/voms.${vo}
+  if [ -f ${file_name} ]; then
+    mkdir -p ${file_name}
+  fi
+
+  echo "${GLITE_LOCATION_LOG}/voms.${vo} {" >> ${file_name}  # log file
+  echo "copytruncate" >> ${file_name}                        # options
+
+  value=`get_vo_param ${vo} VOMS_CORE_LOGROTATE_LOGNUMBER`
+  if [ "x${value}" == "xyes" ]; then
+    lognumber=${value}
+  else
+      lognumber=${VOMS_CORE_LOGROTATE_LOGNUMBER}
+  fi
+  echo "rotate $lognumber" >> ${file_name}                 # log Number
+
+  value=`get_vo_param ${vo} VOMS_CORE_LOGROTATE_PERIOD`
+  if [ "x${value}" == "xyes" ]; then
+    period=${value}
+  else
+      period=${VOMS_CORE_LOGROTATE_PERIOD}
+  fi
+  echo "$period" >> ${file_name}                           # period
+  echo "postrotate " >> ${file_name}                       # command
+  echo "endscript" >> ${file_name}   
+  echo "}" >> ${file_name}   
+
+
+done # VOS
+ 
+}
+
+
