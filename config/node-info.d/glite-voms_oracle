@@ -35,4 +35,5 @@ config_host_certs
 config_tomcat
 config_voms_admin_oracle
 config_voms_core
+config_voms_core_logrotate
 "
