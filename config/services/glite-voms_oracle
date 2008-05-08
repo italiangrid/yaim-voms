@@ -86,3 +86,4 @@ VOMS_ADMIN_MAIL=mail
 # The UNIX group that the VOMS core service is run under
 # voms admin default is voms
 # VOMS_ADMIN_VOMS_GROUP=new_value
+
