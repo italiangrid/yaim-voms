@@ -113,7 +113,7 @@ for vo in ${VOS}; do
   fi
   echo "--timeout=${timeout}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
   voms_hostname=`hostname -f`
-  echo "--uri=${voms_hostname}"  >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+  echo "--uri=${voms_hostname}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
 done #VOs
 
