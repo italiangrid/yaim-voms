@@ -46,25 +46,25 @@ if [ $? -eq 1 ]; then
 fi 
 
 # The following variables can be defined per VOMS server or per VO
-if [ ! "VOMS_ADMIN_DB_HOST" ]; then 
+if [ ! "${VOMS_ADMIN_DB_HOST}" ]; then 
   requires $1 VO__VOMS_ADMIN_DB_HOST 
   if [ $? -eq 1 ]; then   
     exit 1   
   fi 
 fi
-if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then 
+if [ ! "${VOMS_ADMIN_SMTP_HOST}" ]; then 
   requires $1 VO__VOMS_ADMIN_SMTP_HOST 
   if [ $? -eq 1 ]; then
     exit 1
   fi
 fi
-if [ ! "VOMS_ADMIN_MAIL" ]; then 
+if [ ! "${VOMS_ADMIN_MAIL}" ]; then 
   requires $1 VO__VOMS_ADMIN_MAIL 
   if [ $? -eq 1 ]; then
     exit 1
   fi
 fi
-if [ ! "VOMS_ADMIN_CERT" ]; then
+if [ ! "{$VOMS_ADMIN_CERT}" ]; then
   requires $1 VO__VOMS_ADMIN_CERT
   if [ $? -eq 1 ]; then
     exit 1
