@@ -64,12 +64,6 @@ if [ ! "${VOMS_ADMIN_MAIL}" ]; then
     exit 1
   fi
 fi
-if [ ! "{$VOMS_ADMIN_CERT}" ]; then
-  requires $1 VO__VOMS_ADMIN_CERT
-  if [ $? -eq 1 ]; then
-    exit 1
-  fi
-fi
 
 # The following variables are declared by default but we check them too
 requires $1 VOMS_ADMIN_ORACLE_CLIENT VOMS_ADMIN_INSTALL
@@ -112,6 +106,8 @@ if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
 
 for vo in ${VOS}; do
 
+  vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+
   yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
 
   command=" --vo ${vo} --dbtype "oracle""
@@ -123,8 +119,7 @@ for vo in ${VOS}; do
         VOMS_ADMIN_ORACLE_PORT 
         VOMS_PORT 
         VOMS_ADMIN_SMTP_HOST 
-        VOMS_ADMIN_MAIL 
-        VOMS_ADMIN_CERT"
+        VOMS_ADMIN_MAIL" 
 
   options=(dbname 
            dbusername 
@@ -133,7 +128,7 @@ for vo in ${VOS}; do
            dbport 
            port 
            smtp-host 
-           mail-from admincert)
+           mail-from) 
 
   yaimlog DEBUG "Building up the command"
   j=0
@@ -150,6 +145,14 @@ for vo in ${VOS}; do
   done
   
   yaimlog DEBUG "Configure optional parameters for voms admin for VO ${vo}"
+
+  if [ "${VOMS_ADMIN_CERT}" ]; then
+    command="$command --admincert ${VOMS_ADMIN_CERT}"
+  else
+    if [ "`eval echo \\$VO_${vo_name}_VOMS_ADMIN_CERT`" ]; then 
+      command="$command --admincert `eval echo \\$VO_${vo_name}_VOMS_ADMIN_CERT`"
+    fi
+  fi
  
   value=`get_vo_param ${vo} VOMS_ADMIN_DEPLOY_DATABASE`
   if [ "x${value}" == "xno" ]; then 
@@ -212,9 +215,16 @@ for vo in ${VOS}; do
     fi
   fi
   
-  yaimlog DEBUG "The command is ${command}"  
+  yaimlog DEBUG "The command is ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}"  
   yaimlog DEBUG "Configure voms-admin for VO ${vo}"
   ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
+
+  if [ $? -ne 0 ]; then
+    yaimlog ERROR "voms-admin-configure has failed"
+    yestr ${YEX_FUNCERR}
+    yaimlog ERROR "${YERRORSTR}"
+    exit ${YEX_FUNCERR}
+  fi  
 
   yaimlog DEBUG "Setting OCI support for tomcat"
   if grep -q "^JAVA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
@@ -292,17 +302,17 @@ for vo in ${VOS}; do
     echo "voms.request.purge.task.period.seconds 2800" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
   fi
 
-  
-
-  yaimlog DEBUG "Start tomcat"
-  /etc/rc.d/init.d/tomcat5 restart
-  /sbin/chkconfig --add tomcat5
-  /sbin/chkconfig tomcat5 on
-
   yaimlog DEBUG "Start voms-admin"
   ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
 
 done #VOS
+
+  yaimlog DEBUG "Start tomcat"
+  /etc/rc.d/init.d/tomcat5 restart
+  /sbin/chkconfig tomcat5 on
+
+  ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
+  /sbin/chkconfig voms-admin on
 
 else
 
