@@ -69,7 +69,6 @@ for vo in ${VOS}; do
       period=${VOMS_CORE_LOGROTATE_PERIOD}
   fi
   echo "$period" >> ${file_name}                           # period
-  echo "postrotate " >> ${file_name}                       # command
   echo "endscript" >> ${file_name}   
   echo "}" >> ${file_name}   
 
