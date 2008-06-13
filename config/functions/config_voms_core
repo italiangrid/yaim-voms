@@ -118,7 +118,13 @@ for vo in ${VOS}; do
     timeout=${VOMS_CORE_TIMEOUT}
   fi
   echo "--timeout=${timeout}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-  echo "--uri=${VOMS_HOST}:${VOMS_PORT}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+  value=`get_vo_param ${vo} VOMS_PORT`
+  if [ "x${value}" == "xyes" ]; then
+    port=${value}
+  else
+    port=${VOMS_PORT}
+  fi
+  echo "--uri=${VOMS_HOST}:${port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
 done #VOs
 
