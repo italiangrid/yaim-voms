@@ -48,7 +48,9 @@ for vo in ${VOS}; do
 
   file_name=/etc/logrotate.d/voms.${vo}
   if [ -f ${file_name} ]; then
-    mkdir -p ${file_name}
+    mv ${file_name} /tmp/voms.${vo}.old.logrotate
+  else
+    mkdir -p /etc/logrotate.d
   fi
 
   echo "${GLITE_LOCATION_LOG}/voms.${vo} {" >> ${file_name}  # log file
