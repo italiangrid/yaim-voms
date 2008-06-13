@@ -75,6 +75,11 @@ if [ "x${VOMS_ADMIN_INSTALL}" == "xno" ]; then
 
 for vo in ${VOS}; do
 
+  yaimlog DEBUG "Saving a copy of the existing configuration file if any ..."
+  if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ]; then
+    mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf.old
+  fi
+
   yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
 
   command=" --voms-vo ${vo} --db-type ${VOMS_DB_TYPE}"
@@ -105,6 +110,7 @@ for vo in ${VOS}; do
   yaimlog DEBUG "Configure voms core for VO ${vo}"
   ${GLITE_LOCATION}/libexec/voms/voms_install_db ${command}
 
+  yaimlog DEBUG "Adding --uri and --timeout options in the configuration file..."
   value=`get_vo_param ${vo} VOMS_CORE_TIMEOUT`
   if [ "x${value}" == "xyes" ]; then
     timeout=${value}
