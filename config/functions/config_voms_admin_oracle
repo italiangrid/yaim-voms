@@ -311,8 +311,9 @@ done #VOS
   /etc/rc.d/init.d/tomcat5 restart
   /sbin/chkconfig tomcat5 on
 
-  ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
-  /sbin/chkconfig voms-admin on
+  # The voms-admin script can't be chkconfig
+  # ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
+  # /sbin/chkconfig voms-admin on
 
 else
 
