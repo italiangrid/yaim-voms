@@ -132,10 +132,9 @@ if [ ! -d ${GLITE_LOCATION_LOG} ]; then
 fi
 
 for vo in ${VOS}; do
-  vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
-  if [ ! -f ${GLITE_LOCATION_LOG}/voms.${vo_name} ]; then
-    yaimlog DEBUG "Creating voms.${vo_name} log file..."
-    touch ${GLITE_LOCATION_LOG}/voms.${vo_name}
+  if [ ! -f ${GLITE_LOCATION_LOG}/voms.${vo} ]; then
+    yaimlog DEBUG "Creating voms.${vo} log file..."
+    touch ${GLITE_LOCATION_LOG}/voms.${vo}
   fi
 done
 
