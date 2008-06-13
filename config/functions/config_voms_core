@@ -80,6 +80,8 @@ for vo in ${VOS}; do
     mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf.old
   fi
 
+  vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'` 
+
   yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
 
   command=" --voms-vo ${vo} --db-type ${VOMS_DB_TYPE}"
@@ -118,13 +120,7 @@ for vo in ${VOS}; do
     timeout=${VOMS_CORE_TIMEOUT}
   fi
   echo "--timeout=${timeout}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-  value=`get_vo_param ${vo} VOMS_PORT`
-  if [ "x${value}" == "xyes" ]; then
-    port=${value}
-  else
-    port=${VOMS_PORT}
-  fi
-  echo "--uri=${VOMS_HOST}:${port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+  echo "--uri=${VOMS_HOST}:`eval echo \\${VO_${vo_name}_VOMS_PORT}`" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
 done #VOs
 
