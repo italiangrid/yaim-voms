@@ -73,11 +73,6 @@ config_voms_core () {
 
 if [ "x${VOMS_ADMIN_INSTALL}" == "xno" ]; then
 
-  yaimlog DEBUG "Check whether the log directory exists..."
-  if [ ! -d ${GLITE_LOCATION_LOG} ]; then
-    mkdir -p ${GLITE_LOCATION_LOG}
-  fi
-
 for vo in ${VOS}; do
 
   yaimlog DEBUG "Saving a copy of the existing configuration file if any ..."
@@ -87,11 +82,6 @@ for vo in ${VOS}; do
 
   vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'` 
  
-  if [ ! -f ${GLITE_LOCATION_LOG}/voms.${vo_name} ]; then
-    yaimlog DEBUG "Creating voms.${vo_name} log file..." 
-    touch ${GLITE_LOCATION_LOG}/voms.${vo_name}
-  fi
-
   yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
 
   command=" --voms-vo ${vo} --db-type ${VOMS_DB_TYPE}"
@@ -135,6 +125,19 @@ for vo in ${VOS}; do
 done #VOs
 
 fi #voms admin not installed
+
+yaimlog DEBUG "Check whether the log directory exists..."
+if [ ! -d ${GLITE_LOCATION_LOG} ]; then
+  mkdir -p ${GLITE_LOCATION_LOG}
+fi
+
+for vo in ${VOS}; do
+  vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+  if [ ! -f ${GLITE_LOCATION_LOG}/voms.${vo_name} ]; then
+    yaimlog DEBUG "Creating voms.${vo_name} log file..."
+    touch ${GLITE_LOCATION_LOG}/voms.${vo_name}
+  fi
+done
 
 yaimlog DEBUG "Start voms core"
 if [ ! -f /etc/init.d/voms ]; then
