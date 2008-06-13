@@ -57,7 +57,7 @@ for vo in ${VOS}; do
   echo "copytruncate" >> ${file_name}                        # options
 
   value=`get_vo_param ${vo} VOMS_CORE_LOGROTATE_LOGNUMBER`
-  if [ "x${value}" != "xs" ]; then
+  if [ "x${value}" != "x" ]; then
     lognumber=${value}
   else
       lognumber=${VOMS_CORE_LOGROTATE_LOGNUMBER}
