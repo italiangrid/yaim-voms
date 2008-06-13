@@ -127,7 +127,9 @@ done #VOs
 fi #voms admin not installed
 
 yaimlog DEBUG "Start voms core"
-ln -s /opt/glite/etc/init.d/voms /etc/init.d/voms 
+if [ ! -f /etc/init.d/voms ]; then
+  ln -s /opt/glite/etc/init.d/voms /etc/init.d/voms 
+fi
 /sbin/chkconfig voms on
 ${GLITE_LOCATION}/etc/init.d/voms start
 
