@@ -326,6 +326,7 @@ for vo in ${VOS}; do
   echo "--uri=${VOMS_HOST}:`eval echo \\${VO_${vo_name}_VOMS_PORT}`" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
   yaimlog DEBUG "Start voms-admin"
+  ${GLITE_LOCATION}/etc/init.d/voms-admin stop ${vo}
   ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
 
 done #VOS
