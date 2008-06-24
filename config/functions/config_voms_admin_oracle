@@ -186,11 +186,11 @@ for vo in ${VOS}; do
     fi
   fi
 
-  value=`get_vo_param ${vo} VOMS_ADMIN_WEB_REGISTRATION`
+  value=`get_vo_param ${vo} VOMS_ADMIN_WEB_REGISTRATION_DISABLE`
   if [ "x${value}" == "xyes" ]; then
     command="${command} --disable-webui-requests"
   else
-    if [ "x${VOMS_ADMIN_WEB_REGISTRATION}" == "xyes" ]; then
+    if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xyes" ]; then
       command="${command} --disable-webui-requests"
     fi
   fi 
