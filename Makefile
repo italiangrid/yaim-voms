@@ -18,6 +18,8 @@ install:
 	@mkdir -p $(prefix)/yaim/examples/siteinfo
 	@mkdir -p $(prefix)/yaim/examples/siteinfo/services
 	@mkdir -p $(prefix)/yaim/defaults
+	@mkdir -p $(prefix)/yaim/etc
+	@echo "$(package) $(version)-$(release)" > $(prefix)/yaim/etc/versions 
 
 
 	@install -m 0644 config/functions/config* $(prefix)/yaim/functions

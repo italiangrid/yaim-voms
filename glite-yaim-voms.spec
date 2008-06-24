@@ -4,7 +4,7 @@ Summary: glite-yaim-voms module configures the VOMS server.
 Name: glite-yaim-voms
 Version: 1.0.0
 Vendor: EGEE
-Release: 2  
+Release: 3
 License: EGEE
 Group: EGEE
 Source: %{name}.src.tgz
@@ -30,6 +30,7 @@ make install prefix=%{buildroot}%{prefix}
 %config(noreplace) %{prefix}/yaim/node-info.d/glite-*
 %{prefix}/yaim/examples/siteinfo/services/glite-*
 %{prefix}/yaim/defaults/*
+%{prefix}/yaim/etc/versions
 %doc LICENSE
 
 
