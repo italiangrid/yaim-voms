@@ -47,13 +47,6 @@ VO_<vo_name>_VOMS_DB_USER=user_name
 # Password of database user account.
 VO_<vo_name>_VOMS_DB_USER_PASSWORD=password
 
-# The path of the certificate file (in pem format) of an initial VO administrator.
-# The VO will be set up so that this user has full VO administration
-# privileges.
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_CERT
-VOMS_ADMIN_CERT=user_certificate
-
 # Hostname of the database server. Put 'localhost'
 # if you run the database on the same machine.
 # This parameter can be specified per VO in the following way:
@@ -73,6 +66,14 @@ VOMS_ADMIN_SMTP_HOST=hostname
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_VOMS_ADMIN_MAIL
 VOMS_ADMIN_MAIL=mail
+
+# The path of the certificate file (in pem format) of an initial VO administrator.
+# The VO will be set up so that this user has full VO administration
+# privileges.
+# Uncomment this variable if you want to set up an initial VO administrator.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_CERT
+# VOMS_ADMIN_CERT=user_certificate
 
 # Specifies the oracle long connection string.
 # Uncomment this variable if needed.
