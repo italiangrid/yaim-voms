@@ -49,6 +49,16 @@ GLITE_LOCATION_TMP="/tmp/glite"
 # VO_<vo_name>_VOMS_CORE_TIMEOUT
 VOMS_CORE_TIMEOUT=86400
 
+# FQANs syntax that will appear in the VO extension information
+# of a voms proxy. The default value is 'off' which means that
+# the FQANs will appear as: 
+# i.e. attribute: /<vo-name>/Role=NULL/Capability=NULL 
+# If the value is 'on', the FQANs will appear as:
+# i.e. attribute: /<vo-name>
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_SHORT_FQANS
+VOMS_SHORT_FQANS="off"
+
 # Frequency of log file rotation for voms core.
 # Can be 'daily|weekly|monthly
 # This parameter can be specified per VO in the following way:
