@@ -32,7 +32,10 @@
 
 VOMS_mysql_FUNCTIONS="
 config_host_certs
-config_voms_tomcat
+config_add_pool_env
+config_tomcat
+config_crl
 config_voms_admin_mysql
 config_voms_core
+config_voms_logrotate
 "
