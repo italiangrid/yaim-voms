@@ -133,7 +133,8 @@ for vo in ${VOS}; do
         VOMS_ADMIN_ORACLE_PORT 
         VOMS_PORT 
         VOMS_ADMIN_SMTP_HOST 
-        VOMS_ADMIN_MAIL" 
+        VOMS_ADMIN_MAIL
+        VOMS_CORE_TIMEOUT" 
 
   options=(dbname 
            dbusername 
@@ -143,8 +144,7 @@ for vo in ${VOS}; do
            port 
            smtp-host 
            mail-from
-           timeout
-           shortfqans) 
+           timeout) 
 
   yaimlog DEBUG "Building up the command"
   j=0
@@ -172,14 +172,24 @@ for vo in ${VOS}; do
   
   yaimlog DEBUG "Configure optional parameters for voms admin for VO ${vo}"
 
-  if [ "${VOMS_ADMIN_CERT}" ]; then
-    command="$command --admincert ${VOMS_ADMIN_CERT}"
+  value=`get_vo_param ${vo} VOMS_SHORT_FQANS`
+  if [ "x${value}" == "xon" ]; then
+    command="$command --shortfqans"
   else
-    if [ "`eval echo \\$VO_${vo_name}_VOMS_ADMIN_CERT`" ]; then 
-      command="$command --admincert `eval echo \\$VO_${vo_name}_VOMS_ADMIN_CERT`"
+    if [ "x${VOMS_SHORT_FQANS}" == "xon" ]; then
+      command="$command --shortfqans"
     fi
   fi
- 
+
+  value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
+  if [ "x${value}" != "x" ]; then
+    command="$command --admincert ${value}"
+  else
+    if [ "${VOMS_ADMIN_CERT}" ]; then
+      command="$command --admincert ${VOMS_ADMIN_CERT}"
+    fi
+  fi
+
   value=`get_vo_param ${vo} VOMS_ADMIN_DEPLOY_DATABASE`
   if [ "x${value}" == "xno" ]; then 
     command="$command --skip-database"

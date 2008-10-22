@@ -90,16 +90,14 @@ for vo in ${VOS}; do
         VOMS_DB_USER
         VOMS_DB_USER_PASSWORD
         VOMS_PORT
-        VOMS_CORE_TIMEOUT
-        VOMS_SHORT_FQANS"
+        VOMS_CORE_TIMEOUT"
 
   options=(db
            voms-name
            voms-pwd
            sqlloc
            port
-           timeout
-           shortfqans)
+           timeout)
 
   yaimlog DEBUG "Building up the command"
   j=0
@@ -121,6 +119,16 @@ for vo in ${VOS}; do
   fi
   uri="${VOMS_HOST}:${port}"
   command="$command --uri ${uri}"
+
+  # Cheking whether shortfqans is defined or not
+  value=`get_vo_param ${vo} VOMS_SHORT_FQANS`
+  if [ "x${value}" == "xon" ]; then
+    command="$command --shortfqans"
+  else
+    if [ "x${VOMS_SHORT_FQANS}" == "xon" ]; then
+      command="$command --shortfqans"
+    fi
+  fi
 
   yaimlog DEBUG "The command is ${command}"
   yaimlog DEBUG "Configure voms core for VO ${vo}"
