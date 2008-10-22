@@ -142,7 +142,9 @@ for vo in ${VOS}; do
            dbport 
            port 
            smtp-host 
-           mail-from) 
+           mail-from
+           timeout
+           shortfqans) 
 
   yaimlog DEBUG "Building up the command"
   j=0
@@ -157,6 +159,16 @@ for vo in ${VOS}; do
     fi
     j=`expr $j + 1`
   done
+
+  # Adding --uri option
+  value=`get_vo_param ${vo} VOMS_PORT`
+  if [ "x${value}" != "x" ]; then
+    port=${value}
+  else
+    port=${VOMS_PORT}
+  fi
+  uri="${VOMS_HOST}:${port}"
+  command="$command --uri ${uri}"
   
   yaimlog DEBUG "Configure optional parameters for voms admin for VO ${vo}"
 
@@ -315,16 +327,6 @@ for vo in ${VOS}; do
     echo "voms.request.timeout.task.period.hours 24" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
     echo "voms.request.purge.task.period.seconds 2800" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
   fi
-
-  yaimlog DEBUG "Adding --uri and --timeout options in the configuration file..."
-  value=`get_vo_param ${vo} VOMS_CORE_TIMEOUT`
-  if [ "x${value}" != "x" ]; then
-    timeout=${value}
-  else
-    timeout=${VOMS_CORE_TIMEOUT}
-  fi
-  echo "--timeout=${timeout}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-  echo "--uri=${VOMS_HOST}:`eval echo \\${VO_${vo_name}_VOMS_PORT}`" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
   yaimlog DEBUG "Start voms-admin"
   ${GLITE_LOCATION}/etc/init.d/voms-admin stop ${vo}

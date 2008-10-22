@@ -114,7 +114,7 @@ for vo in ${VOS}; do
 
   # Adding --uri option
   value=`get_vo_param ${vo} VOMS_PORT`
-  if [ "x${value}" == "xyes" ]; then
+  if [ "x${value}" != "x" ]; then
     port=${value}
   else
     port=${VOMS_PORT}
