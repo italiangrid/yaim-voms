@@ -85,17 +85,21 @@ for vo in ${VOS}; do
   yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
 
   command=" --voms-vo ${vo} --db-type ${VOMS_DB_TYPE}"
-
+  
   vars="VOMS_DB_NAME
         VOMS_DB_USER
         VOMS_DB_USER_PASSWORD
-        VOMS_PORT"
+        VOMS_PORT
+        VOMS_CORE_TIMEOUT
+        VOMS_SHORT_FQANS"
 
   options=(db
            voms-name
            voms-pwd
            sqlloc
-           port)
+           port
+           timeout
+           shortfqans)
 
   yaimlog DEBUG "Building up the command"
   j=0
@@ -108,19 +112,19 @@ for vo in ${VOS}; do
     j=`expr $j + 1`
   done
 
+  # Adding --uri option
+  value=`get_vo_param ${vo} VOMS_PORT`
+  if [ "x${value}" == "xyes" ]; then
+    port=${value}
+  else
+    port=${VOMS_PORT}
+  fi
+  uri="${VOMS_HOST}:${port}"
+  command="$command --uri ${uri}"
+
   yaimlog DEBUG "The command is ${command}"
   yaimlog DEBUG "Configure voms core for VO ${vo}"
   ${GLITE_LOCATION}/libexec/voms/voms_install_db ${command}
-
-  yaimlog DEBUG "Adding --uri and --timeout options in the configuration file..."
-  value=`get_vo_param ${vo} VOMS_CORE_TIMEOUT`
-  if [ "x${value}" == "xyes" ]; then
-    timeout=${value}
-  else
-    timeout=${VOMS_CORE_TIMEOUT}
-  fi
-  echo "--timeout=${timeout}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-  echo "--uri=${VOMS_HOST}:`eval echo \\${VO_${vo_name}_VOMS_PORT}`" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
 
 done #VOs
 
