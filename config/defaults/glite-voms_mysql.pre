@@ -33,9 +33,42 @@
 # General #
 ###########
 
-X509_HOST_CERT="/etc/grid-security/hostcert.pem"
-X509_HOST_KEY="/etc/grid-security/hostkey.pem"
+GLITE_LOCATION_VAR="/var/glite"
+GLITE_LOCATION_LOG="/var/log/glite"
+GLITE_LOCATION_TMP="/tmp/glite"
 
+#############
+# VOMS_CORE #
+#############
+
+# The maximum length of validity of the ACs that
+# VOMS will grant (in seconds) The default value is 24 hours
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_CORE_TIMEOUT
+VOMS_CORE_TIMEOUT=86400
+
+# FQANs syntax that will appear in the VO extension information
+# of a voms proxy. The default value is 'off' which means that
+# the FQANs will appear as: 
+# i.e. attribute: /<vo-name>/Role=NULL/Capability=NULL 
+# If the value is 'on', the FQANs will appear as:
+# i.e. attribute: /<vo-name>
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_SHORT_FQANS
+VOMS_SHORT_FQANS="off"
+
+# Frequency of log file rotation for voms core.
+# Can be 'daily|weekly|monthly
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_CORE_LOGROTATE_PERIOD
+VOMS_CORE_LOGROTATE_PERIOD=daily
+
+# Number of rotated log files for voms core that should be kept
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_CORE_LOGROTATE_LOGNUMBER
+VOMS_CORE_LOGROTATE_LOGNUMBER=90
+
+VOMS_DB_TYPE=oracle
 
 ##############
 # VOMS_ADMIN #
@@ -44,7 +77,7 @@ X509_HOST_KEY="/etc/grid-security/hostkey.pem"
 # Set this variable to 'no' if you don't want to configure the voms-admin.
 VOMS_ADMIN_INSTALL=yes
 
-# Set this to 'yesy' if you want to enable the build in request scheduler for voms admin.
+# Set this to 'yes' if you want to enable the build in request scheduler for voms admin.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_VOMS_ADMIN_REQUEST_SCHEDULER
 VOMS_ADMIN_REQUEST_SCHEDULER=no
@@ -53,15 +86,16 @@ VOMS_ADMIN_REQUEST_SCHEDULER=no
 # via the voms-admin web interface.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_VOMS_ADMIN_USER_REGISTRATION
-VOMS_ADMIN_WEB_REGISTRATION=yes
+VOMS_ADMIN_WEB_REGISTRATION_DISABLE=yes
 
 # If set to 'yes' it will  clean out and (re)create database schema.
 # The current database contents will be lost.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_DEPLOY_DATABASE
 VOMS_ADMIN_DEPLOY_DATABASE=no
 
 # verbosity
 VOMS_ADMIN_VERBOSE=yes
-
 
 #########
 # Mysql #
@@ -87,6 +121,6 @@ MYSQL_MAX_CONNECTIONS=500
 # Tomcat #
 ##########
 
-CATALINA_HOME=/var/lib/tomcat5
+CATALINA_HOME=/usr/share/tomcat5
 
 TOMCAT_USER=${TOMCAT_USER:-tomcat}
