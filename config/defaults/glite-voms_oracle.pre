@@ -29,16 +29,6 @@
 #
 ##############################################################################
 
-###########
-# General #
-###########
-
-X509_HOST_CERT="/etc/grid-security/hostcert.pem"
-X509_HOST_KEY="/etc/grid-security/hostkey.pem"
-GLITE_LOCATION_VAR="/var/glite"
-GLITE_LOCATION_LOG="/var/log/glite"
-GLITE_LOCATION_TMP="/tmp/glite"
-
 #############
 # VOMS_CORE #
 #############
