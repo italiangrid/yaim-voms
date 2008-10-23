@@ -104,17 +104,20 @@ VOMS_ADMIN_VERBOSE=yes
 # Administrator login name for the MySQL database.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_MYSQL_ADMIN
-MYSQL_ADMIN=root
+VOMS_MYSQL_ADMIN=root
 
 # "Port number of the database server for mysql.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_MYSQL_PORT
-MYSQL_PORT=3306
+VOMS_MYSQL_PORT=3306
+
+# Mysql configuration file
+VOMS_MYSQL_CONFIG_FILE=/etc/my.cnf
 
 # The number of simultaneous client connections allowed.
 # Increasing this value increases the number of file descriptors
 # that mysqld requires.
-MYSQL_MAX_CONNECTIONS=500
+VOMS_MYSQL_MAX_CONNECTIONS=500
 
 
 ##########
