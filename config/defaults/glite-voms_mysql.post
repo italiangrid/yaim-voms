@@ -30,5 +30,5 @@
 ##############################################################################
 
 # Location of the mysql voms libraries
-MYSQL_LIBRARY=${GLITE_LOCATION}/lib/libvomsmysql.so
+VOMS_MYSQL_LIBRARY=${GLITE_LOCATION}/lib/libvomsmysql.so
 
