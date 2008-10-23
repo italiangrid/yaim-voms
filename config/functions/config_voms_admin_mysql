@@ -95,14 +95,20 @@ yaimlog INFO "MySQL configuration"
 if [ ! -f ${VOMS_MYSQL_CONFIG_FILE} ]; then
   touch ${VOMS_MYSQL_CONFIG_FILE}
 else
-  mv ${VOMS_MYSQL_CONFIG_FILE} ${VOMS_MYSQL_CONFIG_FILE}.old
+  cp ${VOMS_MYSQL_CONFIG_FILE} ${VOMS_MYSQL_CONFIG_FILE}.old
 fi
 
-yaimlog DEBUG "Setting max_connections" 
-grep max_connections ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
-if [ ! $? = 0 ]; then
-  echo "max_connections=${VOMS_MYSQL_MAX_CONNECTIONS}" >> ${VOMS_MYSQL_CONFIG_FILE}
-fi
+#yaimlog DEBUG "Setting max_connections"
+#grep max_connections ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+#if [ ! $? = 0 ]; then
+#  grep "[mysqld]" ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+#  if [ ! $? = 0 ]; then
+#    echo "[mysqld]"  >> ${VOMS_MYSQL_CONFIG_FILE}
+#    echo "max_connections=${VOMS_MYSQL_MAX_CONNECTIONS}" >> ${VOMS_MYSQL_CONFIG_FILE}
+#  else
+#    cat ${VOMS_MYSQL_CONFIG_FILE} | sed -e 's/^[mysqld]/[mysqld]\nmax_connections=${VOMS_MYSQL_MAX_CONNECTIONS}/' > ${VOMS_MYSQL_CONFIG_FILE}
+#  fi
+#fi
 
 db_host=`get_vo_param ${vo} VOMS_ADMIN_DB_HOST`
 if [ "x${value}" == "x" ]; then
