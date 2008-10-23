@@ -32,7 +32,7 @@
 config_voms_admin_mysql_check () {
 
 # The following variables are declared always per VO
-requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT 
+requires $1 VOMS_HOST VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT 
 if [ $? -eq 1 ]; then   
     exit 1   
 fi 
@@ -90,6 +90,31 @@ yaimlog DEBUG "Installation of voms-admin: VOMS_ADMIN_INSTALL=${VOMS_ADMIN_INSTA
 
 if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
 
+yaimlog INFO "MySQL configuration"
+
+if [ ! -f ${VOMS_MYSQL_CONFIG_FILE} ]; then
+  touch ${VOMS_MYSQL_CONFIG_FILE}
+else
+  mv ${VOMS_MYSQL_CONFIG_FILE} ${VOMS_MYSQL_CONFIG_FILE}.old
+fi
+
+yaimlog DEBUG "Setting max_connections" 
+grep max_connections ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+if [ ! $? = 0 ]; then
+  echo "max_connections=${VOMS_MYSQL_MAX_CONNECTIONS}" >> ${VOMS_MYSQL_CONFIG_FILE}
+fi
+
+db_host=`get_vo_param ${vo} VOMS_ADMIN_DB_HOST`
+if [ "x${value}" == "x" ]; then
+  db_host=${VOMS_ADMIN_DB_HOST}
+fi
+if [ "x${VOMS_HOST}" == "x${db_host}" ]; then
+  start_mysql 
+fi
+
+yaimlog DEBUG "Setting mysql password"
+set_mysql_passwd
+ 
 for vo in ${VOS}; do
 
   yaimlog DEBUG "Saving a copy of the existing configuration file if any ..."
@@ -101,20 +126,24 @@ for vo in ${VOS}; do
 
   yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
 
-  command=" --vo ${vo} --dbtype "oracle""
+  command=" --vo ${vo} --hostname ${VOMS_HOST} --dbtype "mysql""
 
   vars="VOMS_DB_NAME 
-        VOMS_DB_USER 
-        VOMS_DB_USER_PASSWORD 
+        VOMS_MYSQL_ADMIN 
+        MYSQL_PASSWORD  
+        VOMS_DB_USER
+        VOMS_DB_USER_PASSWORD
         VOMS_ADMIN_DB_HOST 
-        VOMS_ADMIN_ORACLE_PORT 
+        VOMS_MYSQL_PORT
         VOMS_PORT 
         VOMS_ADMIN_SMTP_HOST 
         VOMS_ADMIN_MAIL
         VOMS_CORE_TIMEOUT" 
 
   options=(dbname 
-           dbusername 
+           dbauser 
+           dbapwd
+           dbusername
            dbpassword 
            dbhost 
            dbport 

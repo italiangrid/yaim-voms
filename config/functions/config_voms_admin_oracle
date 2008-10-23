@@ -40,7 +40,7 @@ config_voms_admin_oracle_check () {
 # fi
 
 # The following variables are declared always per VO
-requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT 
+requires $1 VOMS_HOST VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT 
 if [ $? -eq 1 ]; then   
     exit 1   
 fi 
@@ -124,7 +124,7 @@ for vo in ${VOS}; do
 
   yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
 
-  command=" --vo ${vo} --dbtype "oracle""
+  command=" --vo ${vo} --hostname ${VOMS_HOST} --dbtype "oracle""
 
   vars="VOMS_DB_NAME 
         VOMS_DB_USER 
