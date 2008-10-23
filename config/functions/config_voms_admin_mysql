@@ -31,57 +31,266 @@
 
 config_voms_admin_mysql_check () {
 
-requires $1 VOS VO__VOMS_ADMIN_PORT VO__VOMS_ADMIN_DB_NAME VO__VOMS_ADMIN_DB_USER \ 
-            VO__VOMS_ADMIN_DB_USER_PASSWORD 
+# The following variables are declared always per VO
+requires $1 VOS VO__VOMS_DB_NAME VO__VOMS_DB_USER VO__VOMS_DB_USER_PASSWORD VO__VOMS_PORT 
+if [ $? -eq 1 ]; then   
+    exit 1   
+fi 
 
-if [ ! "VOMS_ADMIN_HOSTNAME" ]; then requires VO__VOMS_ADMIN_HOSTNAME fi
-if [ ! "VOMS_ADMIN_CERT" ]; then requires VO__VOMS_ADMIN_CERT fi
-if [ ! "VOMS_ADMIN_DB_HOST" ]; then requires VO__VOMS_ADMIN_DB_HOST fi
-if [ ! "VOMS_ADMIN_SMTP_HOST" ]; then requires VO__VOMS_ADMIN_SMTP_HOST fi
-if [ ! "VOMS_ADMIN_MAIL" ]; then requires VO__VOMS_ADMIN_MAIL fi
+# The following variables can be defined per VOMS server or per VO
+
+if [ ! "${VOMS_CORE_TIMEOUT}" ]; then
+  requires $1 VO__VOMS_CORE_TIMEOUT
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
+fi
+
+if [ ! "${VOMS_ADMIN_DB_HOST}" ]; then 
+  requires $1 VO__VOMS_ADMIN_DB_HOST 
+  if [ $? -eq 1 ]; then   
+    exit 1   
+  fi 
+fi
+if [ ! "${VOMS_ADMIN_SMTP_HOST}" ]; then 
+  requires $1 VO__VOMS_ADMIN_SMTP_HOST 
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
+fi
+if [ ! "${VOMS_ADMIN_MAIL}" ]; then 
+  requires $1 VO__VOMS_ADMIN_MAIL 
+  if [ $? -eq 1 ]; then
+    exit 1
+  fi
+fi
+
+# The following variables are declared by default but we check them too
+requires $1 VOMS_ADMIN_INSTALL
+if [ $? -eq 1 ]; then
+  exit 1
+fi
+
+return 0
+
 
 }
 
 config_voms_admin_mysql_setenv () {
 
+yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
+yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
+yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
 
 }
 
 config_voms_admin_mysql () {
 
-if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" }; then
+yaimlog DEBUG "Installation of voms-admin: VOMS_ADMIN_INSTALL=${VOMS_ADMIN_INSTALL}"
+
+if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
 
 for vo in ${VOS}; do
 
-  VO=`echo ${vo} | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
-  for i in (VOMS_ADMIN_HOSTNAME VOMS_ADMIN_CERT VOMS_ADMIN_DB_HOST VOMS_ADMIN_SMTP_HOST VOMS_ADMIN_MAIL MYSQL_ADMIN MYSQL_PASSWORD MYSQL_PORT); do
-    value=get_vo_param ${vo} $i
-    if [ if [ "x${value}" = "x" ]; then
-      VAR_$i=$value
-    else
-      VAR_$i=`eval echo "\\$VOMS_${VO}_$i"`
-    fi
-  done
- 
-  options=" --vo ${vo} \
-            --dbtype "mysql" \
-            --dbname `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_NAME"` \
-            --dbauser ${VAR_MYSQL_ADMIN} \
-            --dbapwd ${VAR_MYSQL_PASSWORD} \
-            --dbusername `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER"` \
-            --dbpassword `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_DB_USER_PASSWORD" \
-            --dbhost ${VAR_VOMS_ADMIN_DB_HOST} \
-            --dbport ${VAR_MYSQL_PORT} \
-            --port `eval echo "\\$VOMS_${VO}_VOMS_ADMIN_PORT"` \
-            --smtp-host ${VAR_VOMS_ADMIN_SMTP_HOST}\
-            --mail-from ${VOMS_ADMIN_MAIL} "
+  yaimlog DEBUG "Saving a copy of the existing configuration file if any ..."
+  if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ]; then
+    mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf.old
+  fi
 
+  vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+
+  yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
+
+  command=" --vo ${vo} --dbtype "oracle""
+
+  vars="VOMS_DB_NAME 
+        VOMS_DB_USER 
+        VOMS_DB_USER_PASSWORD 
+        VOMS_ADMIN_DB_HOST 
+        VOMS_ADMIN_ORACLE_PORT 
+        VOMS_PORT 
+        VOMS_ADMIN_SMTP_HOST 
+        VOMS_ADMIN_MAIL
+        VOMS_CORE_TIMEOUT" 
+
+  options=(dbname 
+           dbusername 
+           dbpassword 
+           dbhost 
+           dbport 
+           port 
+           smtp-host 
+           mail-from
+           timeout) 
+
+  yaimlog DEBUG "Building up the command"
+  j=0
+  for i in ${vars}; do
+    value=`get_vo_param ${vo} $i`
+    if [ "x${value}" == "x" ]; then
+      value=${!i}
+    fi 
+    command="$command --${options[$j]} $value"
+    if [ $i == "VOMS_DB_NAME" ]; then
+      db_name=$value
+    fi
+    j=`expr $j + 1`
+  done
+
+  # Adding --uri option
+  value=`get_vo_param ${vo} VOMS_PORT`
+  if [ "x${value}" != "x" ]; then
+    port=${value}
+  else
+    port=${VOMS_PORT}
+  fi
+  uri="${VOMS_HOST}:${port}"
+  command="$command --uri ${uri}"
+  
+  yaimlog DEBUG "Configure optional parameters for voms admin for VO ${vo}"
+
+  value=`get_vo_param ${vo} VOMS_SHORT_FQANS`
+  if [ "x${value}" == "xon" ]; then
+    command="$command --shortfqans"
+  else
+    if [ "x${VOMS_SHORT_FQANS}" == "xon" ]; then
+      command="$command --shortfqans"
+    fi
+  fi
+
+  value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
+  if [ "x${value}" != "x" ]; then
+    command="$command --admincert ${value}"
+  else
+    if [ "${VOMS_ADMIN_CERT}" ]; then
+      command="$command --admincert ${VOMS_ADMIN_CERT}"
+    fi
+  fi
+
+  value=`get_vo_param ${vo} VOMS_ADMIN_DEPLOY_DATABASE`
+  if [ "x${value}" == "xno" ]; then 
+    command="$command --skip-database"
+  else
+    if [ "x${value}" == "xyes" ]; then
+      command="${command} --deploy-database"
+    else 
+      if [ "x${VOMS_ADMIN_DEPLOY_DATABASE}" == "xno" ]; then
+        command="${command} --skip-database"
+      else
+        if [ "x${VOMS_ADMIN_DEPLOY_DATABASE}" == "xyes" ]; then
+          command="${command} --deploy-database"
+        else
+           command="${command} --skip-database"
+        fi
+      fi
+    fi
+  fi
+
+  value=`get_vo_param ${vo} VOMS_ADMIN_WEB_REGISTRATION_DISABLE`
+  if [ "x${value}" == "xyes" ]; then
+    command="${command} --disable-webui-requests"
+  else
+    if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xyes" ]; then
+      command="${command} --disable-webui-requests"
+    fi
+  fi 
+
+  if [ "x${VOMS_ADMIN_VERBOSE}" == "xyes" ]; then
+    command="${command} --verbose"
+  fi
+
+  if [ -n "${VOMS_ADMIN_TOMCAT_GROUP}" ]; then
+    command="${command} --tomcat-group ${VOMS_ADMIN_TOMCAT_GROUP}"
+  fi
+
+  if [ -n "${VOMS_ADMIN_VOMS_GROUP}" ]; then
+    command="${command} --voms-group ${VOMS_ADMIN_VOMS_GROUP}"
+  fi
+
+  yaimlog DEBUG "The command is ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}"  
+  yaimlog DEBUG "Configure voms-admin for VO ${vo}"
+  ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
+
+  if [ $? -ne 0 ]; then
+    yaimlog ERROR "voms-admin-configure has failed"
+    yestr ${YEX_FUNCERR}
+    yaimlog ERROR "${YERRORSTR}"
+    exit ${YEX_FUNCERR}
+  fi  
+
+  yaimlog DEBUG "Configure Tomcat memory size"
+  MemSize=`free -m | awk '/^Mem/{if($2 <= 4096) printf "%i", $2/2; else print "2048";}'`
+  MemSize=${MemSize:-256}
+  CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=256m"
+  if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
+    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e "s#^CATALINA_OPTS=.*#CATALINA_OPTS=\"${CATALINA_OPTS}\"#" \
+    >> ${CATALINA_HOME}/conf/tomcat5.conf
+  else
+    echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  fi
+
+  yaimlog DEBUG "Configure the request scheduler"
+  value=`get_vo_param ${vo} VOMS_ADMIN_REQUEST_SCHEDULER`
+  if [ "x${value}" == "xno" ]; then
+    sched=no
+  else
+    if [ "x${value}" == "xyes" ]; then
+      sched=yes
+    else
+      if [ "x${VOMS_ADMIN_REQUEST_SCHEDULER}" == "xno" ]; then
+        sched=no
+      else 
+        if [ "x${VOMS_ADMIN_REQUEST_SCHEDULER}" == "xyes" ]; then
+          sched=yes
+        else
+          sched=no
+        fi
+      fi
+    fi
+  fi
+  if [ "x${sched}" == "xno" ]; then
+    echo "voms.complete.requests.expire.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.incomplete.requests.time.out.after 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.expire.task.period.hours 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.timeout.task.period.hours 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.purge.task.period.seconds 0" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+  else
+    echo "voms.complete.requests.expire.after 60" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.incomplete.requests.time.out.after 30" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.expire.task.period.hours 24" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.timeout.task.period.hours 24" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+    echo "voms.request.purge.task.period.seconds 2800" >> ${GLITE_LOCATION_VAR}/etc/voms-admin/${vo}/voms.service.properties
+  fi
+
+  yaimlog DEBUG "Start voms-admin"
+  ${GLITE_LOCATION}/etc/init.d/voms-admin stop ${vo}
+  ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
+
+done #VOS
+
+  yaimlog DEBUG "Start tomcat"
+  /etc/rc.d/init.d/tomcat5 restart
+  /sbin/chkconfig tomcat5 on
+
+  # The voms-admin script can't be chkconfig
+  # ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
+  # /sbin/chkconfig voms-admin on
+  # Add the voms-admin script in gLite
+  if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
+    touch ${GLITE_LOCATION}/etc/gLiteservices
+  fi
+  grep voms-admin ${GLITE_LOCATION}/etc/gLiteservices > /dev/null
+  if [ ! $? = 0 ] ; then
+    echo "${GLITE_LOCATION}/etc/init.d/voms-admin" >> ${GLITE_LOCATION}/etc/gLiteservices
+  fi
 
 else
 
   yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=no" 
 
 fi # VOMS_ADMIN_INSTALL=yes
+
 
 }
 

@@ -351,6 +351,14 @@ done #VOS
   # The voms-admin script can't be chkconfig
   # ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
   # /sbin/chkconfig voms-admin on
+  # Add the voms-admin script in gLite
+  if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
+    touch ${GLITE_LOCATION}/etc/gLiteservices
+  fi
+  grep voms-admin ${GLITE_LOCATION}/etc/gLiteservices > /dev/null
+  if [ ! $? = 0 ] ; then
+    echo "${GLITE_LOCATION}/etc/init.d/voms-admin" >> ${GLITE_LOCATION}/etc/gLiteservices
+  fi
 
 else
 

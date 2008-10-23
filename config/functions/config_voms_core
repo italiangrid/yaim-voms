@@ -160,9 +160,19 @@ if [ ! -f /opt/glite/etc/profile.d/voms.sh ]; then
   ln -s /opt/glite/etc/profile.d/grid-env.sh /opt/glite/etc/profile.d/voms.sh
 fi
  
-/sbin/chkconfig voms on
 ${GLITE_LOCATION}/etc/init.d/voms stop
 ${GLITE_LOCATION}/etc/init.d/voms start
+
+# Add the voms script in gLite
+# /sbin/chkconfig voms on
+if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
+  touch ${GLITE_LOCATION}/etc/gLiteservices
+fi
+grep -v voms-admin ${GLITE_LOCATION}/etc/gLiteservices | grep voms > /dev/null
+if [ ! $? = 0 ] ; then
+  echo "${GLITE_LOCATION}/etc/init.d/voms" >> ${GLITE_LOCATION}/etc/gLiteservices
+fi
+
 
 }
 
