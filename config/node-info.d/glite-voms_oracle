@@ -33,9 +33,10 @@
 VOMS_oracle_FUNCTIONS="
 config_host_certs
 config_add_pool_env
-config_tomcat
 config_crl
+config_tomcat
 config_voms_admin_oracle
 config_voms_core
+config_glite_initd
 config_voms_logrotate
 "
