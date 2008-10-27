@@ -124,3 +124,9 @@ VOMS_ADMIN_ORACLE_CLIENT=/usr/lib/oracle/10.2.0.1/client
 CATALINA_HOME=/usr/share/tomcat5
 
 TOMCAT_USER=${TOMCAT_USER:-tomcat}
+
+##########
+# Python #
+##########
+
+VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages

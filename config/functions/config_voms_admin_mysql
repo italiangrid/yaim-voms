@@ -79,6 +79,7 @@ return 0
 config_voms_admin_mysql_setenv () {
 
 yaimgridpath_prepend LD_LIBRARY_PATH ${GLOBUS_LOCATION}/lib 
+yaimgridpath_prepend PYTHONPATH ${VOMS_PYTHONPATH}
 
 yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
 yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}

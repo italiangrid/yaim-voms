@@ -95,7 +95,7 @@ fi
 
 yaimgridpath_prepend LD_LIBRARY_PATH ${GLOBUS_LOCATION}/lib 
 yaimgridpath_prepend LD_LIBRARY_PATH ${VOMS_ADMIN_ORACLE_CLIENT}/lib 
-yaimgridpath_prepend PYTHONPATH /opt/ZSI/lib/python2.3/site-packages
+yaimgridpath_prepend PYTHONPATH ${VOMS_PYTHONPATH}
 
 yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
 yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}

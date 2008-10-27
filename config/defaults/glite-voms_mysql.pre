@@ -127,3 +127,10 @@ VOMS_MYSQL_MAX_CONNECTIONS=500
 CATALINA_HOME=/usr/share/tomcat5
 
 TOMCAT_USER=${TOMCAT_USER:-tomcat}
+
+##########
+# Python #
+##########
+
+VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
+
