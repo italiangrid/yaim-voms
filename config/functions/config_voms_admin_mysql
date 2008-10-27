@@ -78,6 +78,8 @@ return 0
 
 config_voms_admin_mysql_setenv () {
 
+yaimgridpath_prepend LD_LIBRARY_PATH ${GLOBUS_LOCATION}/lib 
+
 yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
 yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
 yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
@@ -263,6 +265,15 @@ for vo in ${VOS}; do
     >> ${CATALINA_HOME}/conf/tomcat5.conf
   else
     echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  fi
+
+# LD_LIBRARY_PATH already contains the globus libs from the yaimgridpath command
+  if grep -q "^export LD_LIBRARY_PATH" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
+    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | sed -e \
+    "s#^export LD_LIBRARY_PATH .*#export LD_LIBRARY_PATH=$LD_LIBRARY_PATH#" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  else
+    echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
   yaimlog DEBUG "Configure the request scheduler"
