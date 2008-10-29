@@ -29,9 +29,6 @@
 #
 ##############################################################################
 
-# Location of globus
-GLOBUS_LOCATION=${INSTALL_ROOT}/globus
-
 # Location of the oracle voms libraries
 VOMS_ORACLE_LIBRARY=${GLITE_LOCATION}/lib/libvomsoracle.so
 
