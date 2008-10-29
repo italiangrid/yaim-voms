@@ -101,17 +101,21 @@ else
   cp ${VOMS_MYSQL_CONFIG_FILE} ${VOMS_MYSQL_CONFIG_FILE}.old
 fi
 
-#yaimlog DEBUG "Setting max_connections"
-#grep max_connections ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
-#if [ ! $? = 0 ]; then
-#  grep "[mysqld]" ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
-#  if [ ! $? = 0 ]; then
-#    echo "[mysqld]"  >> ${VOMS_MYSQL_CONFIG_FILE}
-#    echo "max_connections=${VOMS_MYSQL_MAX_CONNECTIONS}" >> ${VOMS_MYSQL_CONFIG_FILE}
-#  else
-#    cat ${VOMS_MYSQL_CONFIG_FILE} | sed -e 's/^[mysqld]/[mysqld]\nmax_connections=${VOMS_MYSQL_MAX_CONNECTIONS}/' > ${VOMS_MYSQL_CONFIG_FILE}
-#  fi
-#fi
+yaimlog DEBUG "Setting max_connections"
+grep max_connections ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+if [ ! $? = 0 ]; then
+  yaimlog DEBUG "max_connections is not defined in ${VOMS_MYSQL_CONFIG_FILE}..."
+  grep "[mysqld]" ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+  if [ ! $? = 0 ]; then
+    yaimlog DEBUG "[mysqld] section is not defined in ${VOMS_MYSQL_CONFIG_FILE}..."
+    echo "[mysqld]"  >> ${VOMS_MYSQL_CONFIG_FILE}
+    echo "max_connections=${VOMS_MYSQL_MAX_CONNECTIONS}" >> ${VOMS_MYSQL_CONFIG_FILE}
+  else
+    mycnftmp=`mktemp /tmp/my.cnf.XXXXXX`
+    cat ${VOMS_MYSQL_CONFIG_FILE} | sed "s#^\[mysqld\]#\[mysqld\]\nmax_connections=${VOMS_MYSQL_MAX_CONNECTIONS}#" > ${mycnftmp}
+    mv ${mycnftmp} ${VOMS_MYSQL_CONFIG_FILE}
+  fi
+fi
 
 db_host=`get_vo_param ${vo} VOMS_ADMIN_DB_HOST`
 if [ "x${value}" == "x" ]; then
