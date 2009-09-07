@@ -17,10 +17,10 @@
 # limitations under the License.
 ##############################################################################
 #
-# NAME :            glite-voms_oracle.pre
+# NAME :        glite-voms_mysql.pre
 #
-# DESCRIPTION : This function configures the default parameters for voms oracle.
-
+# DESCRIPTION : This function configures the default parameters for voms.
+#
 # AUTHORS :     yaim-contact@cern.ch
 #
 # NOTES :
@@ -28,6 +28,7 @@
 # YAIM MODULE:  glite-yaim-voms
 #
 ##############################################################################
+
 ###########
 # General #
 ###########
@@ -56,6 +57,8 @@ VOMS_CORE_TIMEOUT=86400
 # VO_<vo_name>_SHORT_FQANS
 VOMS_SHORT_FQANS="off"
 
+VOMS_NEWFORMAT="off"
+
 # Frequency of log file rotation for voms core.
 # Can be 'daily|weekly|monthly
 # This parameter can be specified per VO in the following way:
@@ -67,7 +70,11 @@ VOMS_CORE_LOGROTATE_PERIOD=daily
 # VO_<vo_name>_VOMS_CORE_LOGROTATE_LOGNUMBER
 VOMS_CORE_LOGROTATE_LOGNUMBER=90
 
-VOMS_DB_TYPE=oracle
+VOMS_DB_TYPE=mysql
+
+VOMS_CORE_LOGLEVEL=4
+
+VOMS_CORE_LOGTYPE=7
 
 ##############
 # VOMS_ADMIN #
@@ -75,11 +82,6 @@ VOMS_DB_TYPE=oracle
 
 # Set this variable to 'no' if you don't want to configure the voms-admin.
 VOMS_ADMIN_INSTALL=yes
-
-# Set this to 'yes' if you want to enable the build in request scheduler for voms admin.
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_REQUEST_SCHEDULER
-VOMS_ADMIN_REQUEST_SCHEDULER=no
 
 # Set this variable to no if you want to disable the user registration 
 # via the voms-admin web interface.
@@ -93,17 +95,66 @@ VOMS_ADMIN_WEB_REGISTRATION_DISABLE=yes
 # VO_<vo_name>_VOMS_ADMIN_DEPLOY_DATABASE
 VOMS_ADMIN_DEPLOY_DATABASE=no
 
-# verbosity
+# Run voms-admin-configure with --verbose
 VOMS_ADMIN_VERBOSE=yes
+
+VOMS_ADMIN_SHOW_FULL_DN=true
+
+VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT=false
+
+VOMS_ADMIN_REQUEST_WARNINGS=true
+
+VOMS_ADMIN_REQUEST_LIFETIME=86400
+
+VOMS_ADMIN_CA_RELOAD_PERIOD=1800
+
+VOMS_ADMIN_AUDITING=false
+
+VOMS_ADMIN_AUTH_READS=true
+
+VOMS_ADMIN_PAGINATION_USER_MAX=10
+
+VOMS_ADMIN_PAGINATION_GROUP_MAX=10
+
+VOMS_ADMIN_PAGINATION_ROLE_MAX=10
+
+VOMS_ADMIN_PAGINATION_ATTR_MAX=10
+
+# VOMS ADMIN SAML Service
+#
+# The lifetime (expressed in minutes) of SAML attribute assertions
+# issued by the VOMS SAML attribute authority
+VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME=720
+
+VOMS_ADMIN_SAML_AA_CERTIFICATE=/etc/grid-security/tomcat-cert.pem
+VOMS_ADMIN_SAML_AA_KEY=/etc/grid-security/tomcat-key.pem
+
+#########
+# Mysql #
+#########
+
+# Administrator login name for the MySQL database.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_MYSQL_ADMIN
+VOMS_MYSQL_ADMIN=root
+
+# "Port number of the database server for mysql.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_MYSQL_PORT
+VOMS_MYSQL_PORT=3306
+
+# Mysql configuration file
+VOMS_MYSQL_CONFIG_FILE=/etc/my.cnf
+
+# The number of simultaneous client connections allowed.
+# Increasing this value increases the number of file descriptors
+# that mysqld requires.
+VOMS_MYSQL_MAX_CONNECTIONS=500
+
 
 ##########
 # Oracle #
 ##########
-
-# "Port number of the database server for oracle.
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>__ORACLE_PORT
-VOMS_ADMIN_ORACLE_PORT=10121
 
 # Minimum number of connections to be opened per VO.
 VOMS_ADMIN_ORACLE_MIN_CONNECTIONS=1
@@ -116,7 +167,17 @@ VOMS_ADMIN_ORACLE_START_CONNECTIONS=10
 
 # Location of the Oracle Instantclient installation
 VOMS_ADMIN_ORACLE_CLIENT=/usr/lib/oracle/10.2.0.1/client
- 
+
+#############
+# Hibernate #
+#############
+
+HIBERNATE_IDLE_TEST_PERIOD=100
+HIBERNATE_MIN_SIZE=5
+HIBERNATE_MAX_SIZE=100
+HIBERNATE_MAX_STATEMENTS=0
+HIBERNATE_TIMEOUT=100
+
 ##########
 # Tomcat #
 ##########
@@ -130,3 +191,4 @@ TOMCAT_USER=${TOMCAT_USER:-tomcat}
 ##########
 
 VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
+

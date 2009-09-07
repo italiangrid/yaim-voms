@@ -1,0 +1,874 @@
+##############################################################################
+# Copyright (c) Members of the EGEE Collaboration. 2004. 
+# See http://www.eu-egee.org/partners/ for details on the copyright 
+# holders.  
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at 
+#
+#    http://www.apache.org/licenses/LICENSE-2.0 
+#
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS 
+# OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+##############################################################################
+#
+# NAME :        config_voms
+#
+# DESCRIPTION : This function configures VOMS SERVER
+# 
+# AUTHORS :     yaim-contact@cern.ch
+#
+# NOTES : 
+#
+# YAIM MODULE:  glite-yaim-voms
+#                 
+##############################################################################
+
+
+config_voms_check ()
+{
+   mysqlUsed="no"
+   oracleUsed="no"
+   voCount=0
+   dbSetCount=0
+   localMysql=0
+
+   requires $1 VOMS_HOST VOMS_ADMIN_INSTALL VOS VO__VOMS_DB_USER VO__VOMS_DB_PASS VO__VOMS_PORT
+   if [ $? -eq 1 ]; then
+      exit 1
+   fi
+
+   for vo in ${VOS}; do
+      if [ "x$(get_vo_param ${vo} VOMS_DB_TYPE)" == "xmysql" ]; then
+         mysqlUsed="yes"
+         dbSetCount=$[$dbSetCount+1]
+         value=`get_vo_param ${vo} VOMS_DB_HOST`
+         if [ "x$value" == "xlocalhost" ] || \
+               [ "x$value" == "x$(hostname)" ] || [ "x$value" == "x$(hostname -s)" ] || \
+               ( [ -z "$value" ] && ( [ "x$VOMS_DB_HOST" == "xlocalhost" ] || \
+               [ "x$VOMS_DB_HOST" == "x$(hostname)" ] || [ "x$VOMS_DB_HOST" == "x$(hostname -s)" ] ) ); then
+            localMysql=1
+         fi
+      fi
+      if [ "x$(get_vo_param ${vo} VOMS_DB_TYPE)" == "xoracle" ]; then
+         oracleUsed="yes"
+         dbSetCount=$[$dbSetCount+1]
+      fi
+      voCount=$[$voCount+1]
+   done
+
+   yaimlog DEBUG "localMysql is: $localMysql"
+
+   if [ $dbSetCount -lt $voCount ]; then
+      if [ "x$VOMS_DB_TYPE" == "xmysql" ]; then
+         mysqlUsed="yes"
+      fi
+      if [ "x$VOMS_DB_TYPE" == "xoracle" ]; then
+         oracleUsed="yes"
+      fi
+   fi
+
+   yaimlog DEBUG "Is MySQL used: $mysqlUsed"
+   yaimlog DEBUG "Is Oracle used: $oracleUsed"
+   yaimlog DEBUG "VO count: $voCount"
+   yaimlog DEBUG "DB set count: $dbSetCount"
+
+   _portlist=""
+   for vo in ${VOS}; do
+      vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+      _port=`get_vo_param ${vo} VOMS_PORT`
+      for p in $_portlist; do
+         if [[ $_port =~ '^[0-9]*$' ]]; then
+            if [ "x$p" == "x$_port" ]; then
+               yaimlog ERROR "The value of VO_${vo_name}_VOMS_PORT not unique. Abort."
+               exit ${YEX_CONFFILE}
+            fi 
+         else
+            yaimlog ERROR "The value of VO_${vo_name}_VOMS_PORT is not an integer"
+            exit ${YEX_CONFFILE}
+         fi
+      done
+      _portlist="$_portlist $_port"
+
+      _db_type=`get_vo_param ${vo} VOMS_DB_TYPE`
+      if [ -z "$_db_type" ] && [ -z "$VOMS_DB_TYPE" ]; then 
+         yaimlog ERROR "The database type for VO ${vo} is not known"
+         exit ${YEX_CONFFILE}
+      fi
+      if [ -z "$_db_type" ]; then
+         _db_type=$VOMS_DB_TYPE
+      fi
+
+      if [ "x$_db_type" != "xmysql" ] && [ "x$_db_type" != "xoracle" ]; then
+         yaimlog ERROR "The allowed values for database type are [oracle|mysql]"
+         exit ${YEX_CONFFILE}
+      fi
+
+      _db_host=`get_vo_param ${vo} VOMS_DB_HOST`
+      if [ -z "$_db_host" ] && [ -z "$VOMS_DB_HOST" ]; then
+         yaimlog ERROR "The DB_HOST for VO ${vo} is not known"
+         exit ${YEX_CONFFILE}
+      fi
+
+      if [ "x$_db_type" == "xmysql" ]; then
+         _db_name=`get_vo_param ${vo} VOMS_DB_NAME`
+         if [ -z "$_db_name" ]; then 
+            yaimlog ERROR "The value of VO_${vo_name}_VOMS_DB_NAME is empty"
+            exit ${YEX_CONFFILE}
+         fi
+      fi
+
+   done
+
+   if [ ! "${VOMS_ADMIN_SMTP_HOST}" ]; then 
+      requires $1 VO__VOMS_ADMIN_SMTP_HOST 
+      if [ $? -eq 1 ]; then
+         exit ${YEX_CONFFILE}
+      fi
+   fi
+
+   if [ ! "${VOMS_ADMIN_MAIL}" ]; then 
+      requires $1 VO__VOMS_ADMIN_MAIL 
+      if [ $? -eq 1 ]; then
+         exit ${YEX_CONFFILE}
+      fi
+   fi
+
+   if [ "x$oracleUsed" == "xyes" ]; then
+      requires $1 ORACLE_CLIENT
+      if [ $? -eq 1 ]; then
+         exit ${YEX_CONFFILE}
+      fi
+   fi
+
+   if [ -z "$ORACLE_CONNECTION_STRING" ]; then
+      for vo in ${VOS}; do
+         _vo_connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
+         if [ -z "${_vo_connection_string}" ]; then
+            vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+            yaimlog ERROR "The ORACLE connection string for VO <${vo_name}> is not set (VO_${vo_name}_ORACLE_CONNECTION_STRING)". 
+            yaimlog ERROR "Global value for ORACLE_CONNECTION_STRING is not set as well."
+            yaimlog ERROR "Don't know how to establish a database connection for VO <${vo_name}>. "
+            yaimlog ERROR "Abort!"
+            exit 1
+         fi
+      done
+   fi
+
+   return 0
+}
+
+
+init_tnsnames () {
+
+   yaimlog DEBUG "Initializing tnsnames.ora..."
+
+   if [ -f $GLITE_LOCATION/etc/voms/tnsnames.ora ]; then
+      rm -rf $GLITE_LOCATION/etc/voms/tnsnames.ora
+   fi
+
+   if [ -n "${ORACLE_CONNECTION_STRING}" ]; then
+      yaimlog DEBUG "Global ORACLE connection string exists. Writing as DB_VOMS in tnsnames.ora."
+      echo "DB_VOMS=${ORACLE_CONNECTION_STRING}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+   fi
+
+}
+
+process_parameters () {
+
+   i=0
+   for variable in ${_variable_names}; do
+      name="${_parameter_names[$i]}"
+      value=`get_vo_param ${vo} $variable`
+      if [ -z "$value" ]; then
+         value=`echo ${!variable}`
+      fi
+      if [ -n "$value" ]; then
+         if grep -q "^[ \t]*$name" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1; then
+            if [ "x$1" == "x$voms.service.properties" ]; then
+               sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1 = $value/" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
+            else
+               sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1=$value/" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
+            fi
+         else
+            echo "$name = $value" >> $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
+         fi
+      fi
+      i=`expr $i + 1`
+  done
+
+}
+
+
+config_tomcat_voms () {
+
+  if [ "x$oracleUsed" == "xyes" ]; then
+
+    yaimlog DEBUG "Setting OCI support for tomcat"
+    if ! grep -q "^JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
+       echo "JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}/lib\"" \
+           >> ${CATALINA_HOME}/conf/tomcat5.conf
+    fi
+
+    # LD_LIBRARY_PATH already contains the oracle libs from the yaimgridpath command
+    if ! grep -q "^export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
+       echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    fi
+
+    if ! grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
+        echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    fi
+  
+    if [ -f ${ORACLE_CLIENT}/lib/ojdbc14.jar ]; then
+       if ! [ -e ${CATALINA_HOME}/common/lib/ojdbc14.jar ]; then
+          cp ${ORACLE_CLIENT}/lib/ojdbc14.jar ${CATALINA_HOME}/common/lib
+       fi
+    else
+        yaimlog ERROR "${ORACLE_CLIENT}/lib/ojdbc14.jar doesn't exist and it's needed to configure the OCI support in Tomcat"
+        yestr ${YEX_NOSUCHFILE}
+        yaimlog ERROR "${YERRORSTR}"
+        exit ${YEX_NOSUCHFILE}
+    fi
+
+  fi
+
+  if ! grep "^JAVA_ENDORSED_DIRS" ${CATALINA_HOME}/conf/tomcat5.conf | grep -q voms-admin; then
+     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:/opt/glite/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  fi
+
+  yaimlog DEBUG "Configure Tomcat memory size"
+  MemSize=`free -m | awk '/^Mem/{if($2 <= 4096) printf "%i", $2/2; else print "2048";}'`
+  MemSize=${MemSize:-256}
+  CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=256m"
+  if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
+    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | \
+        sed -e "s#^CATALINA_OPTS=\"\-Xmx.*#CATALINA_OPTS=\"${CATALINA_OPTS}\"#" \
+        >> ${CATALINA_HOME}/conf/tomcat5.conf
+  else
+    echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  fi
+}
+
+
+config_voms_setenv () {
+
+   if [ "x$oracleUsed" == "xyes" ]; then
+
+      if [ ! -d ${ORACLE_CLIENT} ]; then
+         yaimlog ERROR "The Oracle InstantClient cannot be found at ${ORACLE_CLIENT}"
+         yaimlog ERROR "Please, check the definition of ORACLE_CLIENT or install the Oracle InstantClient if it's not installed"
+         yestr ${YEX_NOSUCHFILE}
+         yaimlog ERROR "${YERRORSTR}"
+         exit ${YEX_NOSUCHFILE}
+      fi
+
+      yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
+      yaimgridenv_set VOMSORACLE_MIN_CONNECTION ${VOMS_ADMIN_ORACLE_MIN_CONNECTIONS}
+      yaimgridenv_set VOMSORACLE_MAX_CONNECTION ${VOMS_ADMIN_ORACLE_MAX_CONNECTIONS}
+      yaimgridenv_set VOMSORACLE_INC_CONNECTION ${VOMS_ADMIN_ORACLE_START_CONNECTIONS}
+   fi
+
+   yaimgridpath_prepend LD_LIBRARY_PATH ${GLOBUS_LOCATION}/lib 
+   yaimgridpath_prepend LD_LIBRARY_PATH ${ORACLE_CLIENT}/lib 
+   yaimgridpath_prepend PYTHONPATH ${VOMS_PYTHONPATH}
+
+   yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
+   yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
+   yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
+}
+
+
+config_voms () {
+
+   if [ "x$oracleUsed" == "xyes" ]; then
+      yaimlog DEBUG "Oracle used: $oracleUsed"
+      init_tnsnames
+   fi
+
+   if [ "x$mysqlUsed" == "xyes" ]; then
+
+      yaimlog INFO "MySQL configuration"
+
+      if [ $localMysql -eq 1 ]; then
+
+         mysql_restart_needed=1
+
+         if [ ! -f ${VOMS_MYSQL_CONFIG_FILE} ]; then
+           touch ${VOMS_MYSQL_CONFIG_FILE}
+         else
+           cp ${VOMS_MYSQL_CONFIG_FILE} ${VOMS_MYSQL_CONFIG_FILE}.old
+         fi
+
+         yaimlog DEBUG "Setting MySQL max_connections"
+         grep max_connections ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+         if [ ! $? = 0 ]; then
+            yaimlog DEBUG "max_connections is not defined in ${VOMS_MYSQL_CONFIG_FILE}..."
+            grep "[mysqld]" ${VOMS_MYSQL_CONFIG_FILE} > /dev/null
+            if [ ! $? = 0 ]; then
+               yaimlog DEBUG "[mysqld] section is not defined in ${VOMS_MYSQL_CONFIG_FILE}..."
+               echo "[mysqld]"  >> ${VOMS_MYSQL_CONFIG_FILE}
+               echo "max_connections=${VOMS_MYSQL_MAX_CONNECTIONS}" >> ${VOMS_MYSQL_CONFIG_FILE}
+            else
+               mycnftmp=`mktemp /tmp/my.cnf.XXXXXX`
+               cat ${VOMS_MYSQL_CONFIG_FILE} | sed "s#^\[mysqld\]#\[mysqld\]\nmax_connections = ${VOMS_MYSQL_MAX_CONNECTIONS}#" > ${mycnftmp}
+               mv ${mycnftmp} ${VOMS_MYSQL_CONFIG_FILE}
+            fi
+         else
+            sed -i -e "s/^max_connections\s*=.*/max_connections = $VOMS_MYSQL_MAX_CONNECTIONS/" /etc/my.cnf
+         fi
+
+         if mysqladmin ping >/dev/null 2>/dev/null; then
+            set_mysql_passwd
+         else
+            yaimlog INFO "MySQL is not running. Attempting to start it"
+            if service mysqld start; then
+               mysql_restart_needed=0
+               set_mysql_passwd
+            else
+               yaimlog ERROR "Cannot start local MySQL instance"
+               yestr ${YEX_FUNCERR}
+               yaimlog ERROR "${YERRORSTR}"
+               exit ${YEX_FUNCERR}
+            fi
+         fi
+         if [ $mysql_restart_needed -eq 1 ]; then
+            service mysqld restart
+         fi
+      fi
+   fi
+
+   if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
+      source ${FUNCTIONS_DIR}/config_secure_tomcat
+      config_secure_tomcat_check
+      config_secure_tomcat_setenv
+      config_secure_tomcat
+      config_tomcat_voms
+   fi
+
+   yaimlog INFO "Ready to start VOMS configuration"
+   yaimlog DEBUG "Installation of VOMS-ADMIN: VOMS_ADMIN_INSTALL=${VOMS_ADMIN_INSTALL}"
+
+   for vo in ${VOS}; do
+
+      _voms_db_host=`get_vo_param ${vo} VOMS_DB_HOST`
+      if [ -z "$_voms_db_host" ]; then
+         _voms_db_host=$VOMS_DB_HOST
+      fi
+
+      _vo_is_local_mysql=0
+      if [ "x$_voms_db_host" == "xlocalhost" ] || \
+              [ "x$_voms_db_host" == "x$(hostname -s)" ] || [ "x$_voms_db_host" == "x$(hostname)" ]; then
+         _vo_is_local_mysql=1
+      fi
+
+      _vo_db_type=`get_vo_param ${vo} VOMS_DB_TYPE`
+      if [ -z "$_vo_db_type" ]; then
+         _vo_db_type=$VOMS_DB_TYPE
+      fi
+
+      if [ "x$_vo_db_type" == "xmysql" ]; then
+         _vo_db_port=`get_vo_param ${vo} VOMS_MYSQL_PORT`
+         if [ -z "$_vo_db_port" ]; then 
+            if [ -z "$VOMS_MYSQL_PORT" ]; then
+               _vo_db_port=3306
+            else
+               _vo_db_port="$VOMS_MYSQL_PORT"
+            fi
+         fi
+      fi
+
+      vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+      _vo_db_user=`get_vo_param ${vo} VOMS_DB_USER`
+      _vo_db_pass=`get_vo_param ${vo} VOMS_DB_PASS`
+
+
+      if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
+
+         yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
+         command=" --vo ${vo} --hostname ${VOMS_HOST} --dbtype ${_vo_db_type} --skip-voms-core "
+
+         vars="VOMS_DB_USER 
+               VOMS_DB_PASS
+               VOMS_PORT
+               VOMS_ADMIN_SMTP_HOST 
+               VOMS_ADMIN_MAIL" 
+
+         options=(dbusername
+                  dbpassword
+                  port
+                  smtp-host
+                  mail-from) 
+
+         j=0
+         for i in ${vars}; do
+             value=`get_vo_param ${vo} $i`
+             if [ "x${value}" == "x" ]; then
+                 value=${!i}
+             fi 
+             command="$command --${options[$j]} $value "
+             j=`expr $j + 1`
+         done
+
+         if [ "x$_vo_db_type" == "xmysql" ]; then
+
+            _vo_dba_user="root"
+            _vo_dba_pass="$MYSQL_PASSWORD"
+
+            _voms_db_host=`get_vo_param ${vo} VOMS_DB_HOST`
+            if [ -z "$_voms_db_host" ]; then
+               _voms_db_host=$VOMS_DB_HOST
+            fi
+            command="$command --dbhost ${_voms_db_host} "
+
+            _voms_db_name=`get_vo_param ${vo} VOMS_DB_NAME`
+            command="$command --dbname ${_voms_db_name} "
+
+         else
+
+            _voms_db_name="DB_VOMS"
+            _voms_connection_string=${ORACLE_CONNECTION_STRING}
+
+            _connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
+            cmsg="ORACLE connection string for this VO is: ${_connection_string}"
+            if [ -z ${_connection_string} ]; then
+               cmsg="No VO specific ORACLE connection string"
+            fi
+            yaimlog DEBUG "${cmsg}"
+            yaimlog DEBUG "ORACLE global connection string: ${_voms_connection_string}"
+            if [ -n "${_connection_string}" ]; then
+               if [ "x${ORACLE_CONNECTION_STRING}" != "x${_connection_string}" ]; then
+                  yaimlog DEBUG "Custom connection string is specified for this VO and it is not the same as the global one."
+                  _voms_db_name=`echo "DB_VOMS_$vo" | tr '[:lower:]' '[:upper:]' | sed -e 's/-/_/g' -e 's/\./_/g'`
+                  _voms_connection_string=$_connection_string
+               fi
+            fi
+            if [ "x${_voms_db_name}" != "xDB_VOMS" ]; then
+               yaimlog DEBUG "Output the connection string to tnsnames.ora. Name is: ${_voms_db_name}"
+               echo "${_voms_db_name}=${_voms_connection_string}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+            fi
+
+            command="$command --dbname ${_voms_db_name} "
+         fi
+
+         value=`get_vo_param ${vo} VOMS_ADMIN_WEB_REGISTRATION_DISABLE`
+         if [ "x${value}" == "xyes" ]; then
+             command="${command} --disable-webui-requests "
+         else
+             if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xyes" ]; then
+                 command="${command} --disable-webui-requests "
+             fi
+         fi 
+
+         if [ "x${VOMS_ADMIN_VERBOSE}" == "xyes" ]; then
+             command="${command} --verbose"
+         fi
+
+         if [ -n "${VOMS_ADMIN_TOMCAT_GROUP}" ]; then
+             command="${command} --tomcat-group ${VOMS_ADMIN_TOMCAT_GROUP}"
+         fi
+
+         if [ -n "${VOMS_ADMIN_VOMS_GROUP}" ]; then
+             command="${command} --voms-group ${VOMS_ADMIN_VOMS_GROUP}"
+         fi
+
+         if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
+             mkdir -p ${GLITE_LOCATION}/etc/voms
+         fi
+
+         if [ -n "$VOMS_ADMIN_SAML_AA_CERTIFICATE" ] && [ -n "$VOMS_ADMIN_SAML_AA_KEY" ] && \
+               [ -f "$VOMS_ADMIN_SAML_AA_CERTIFICATE" ] && [ -f "$VOMS_ADMIN_SAML_AA_KEY" ]; then
+            command="${command} --aa-cert ${VOMS_ADMIN_SAML_AA_CERTIFICATE} --aa-key ${VOMS_ADMIN_SAML_AA_KEY}"
+         else
+            command="${command} --aa-cert ${TOMCAT_HOSTCERT_LOCATION} --aa-key ${TOMCAT_HOSTKEY_LOCATION}"
+         fi
+
+         if [ -n "${VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME}" ]; then
+            command="${command} --saml-max-assertion-lifetime ${VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME}"
+         fi
+
+         command="${command} --skip-database"
+
+         if [ "x$_vo_db_port" != "x3306" ] && [ "x$_vo_db_type" == "xmysql" ]; then
+            command="${command} --dbport ${_vo_db_port}"
+         fi
+
+         yaimlog DEBUG "Configure voms-admin for VO ${vo}"
+         yaimlog DEBUG "The install command is: ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}"  
+         ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
+
+         if [ $? -ne 0 ]; then
+             yaimlog ERROR "voms-admin-configure has failed"
+             yestr ${YEX_FUNCERR}
+             yaimlog ERROR "${YERRORSTR}"
+             exit ${YEX_FUNCERR}
+         fi  
+
+         if [ "x$VOMS_DB_DEPLOY" != "xno" ]; then
+
+            if  [ "x$_vo_db_type" == "xmysql" ] && ( [ "x$_voms_db_host" == "xlocalhost" ] || \
+                   [ "x$_voms_db_host" == "x$(hostname -s)" ] || [ "x$_voms_db_host" == "x$(hostname)" ] ) ; then
+
+               _create_grant=yes
+
+               if [ -n "$MYSQL_PASSWORD" ]; then
+                  yaimlog DEBUG "MYSQL PASSWORD is set."
+                  if mysqladmin ping -u root --host="$_voms_db_host" --port="$_vo_db_port" --pass="$MYSQL_PASSWORD"; then
+
+                     yaimlog DEBUG "Connected successfully to MySQL server $_voms_db_host as root"
+                     if ! mysql -u root --host="$_voms_db_host" --port="$_vo_db_port" --pass="$MYSQL_PASSWORD" \
+                                --exec "show databases" --column-names=false | grep "$_voms_db_name"; then
+                        if mysql -u root --host="$_voms_db_host" --port="$_vo_db_port" \
+                                 --pass="$MYSQL_PASSWORD" --exec "CREATE DATABASE $_voms_db_name"; then
+                           yaimlog DEBUG "Database $_voms_db_name created successfully"
+                        else
+                           yaimlog ERROR "Error creating database $_voms_db_name"
+                           yestr ${YEX_FUNCERR}
+                           yaimlog ERROR "${YERRORSTR}"
+                           exit ${YEX_FUNCERR}
+                        fi
+                     else
+                        yaimlog DEBUG "Database $_voms_db_name already exists"
+                     fi
+
+                     if ! mysql -u root --host="$_voms_db_host" --port="$_vo_db_port" --pass="$MYSQL_PASSWORD" \
+                                                                 --exec "GRANT ALL PRIVILEGES ON $_voms_db_name.* \
+                                                                         TO $_vo_db_user@'`hostname`' IDENTIFIED BY \
+                                                                         '$_vo_db_pass'" >/dev/null ; then
+                           yaimlog ERROR "Error granting privileges on $_voms_db_name to $_vo_db_user"
+                           yestr ${YEX_FUNCERR}
+                           yaimlog ERROR "${YERRORSTR}"
+                           exit ${YEX_FUNCERR}
+                     fi
+                     if ! mysql -u root --host="$_voms_db_host" --port="$_vo_db_port" --pass="$MYSQL_PASSWORD" \
+                                                                 --exec "GRANT ALL PRIVILEGES ON $_voms_db_name.* \
+                                                                         TO $_vo_db_user@localhost IDENTIFIED BY \
+                                                                         '$_vo_db_pass'" >/dev/null; then
+                           yaimlog ERROR "Error granting privileges on $_voms_db_name to $_vo_db_user"
+                           yestr ${YEX_FUNCERR}
+                           yaimlog ERROR "${YERRORSTR}"
+                           exit ${YEX_FUNCERR}
+                     fi
+                 else
+                     yaimlog ERROR "Cannot connect to the database server as root."
+                     _create_grant=no
+                  fi
+               else
+                  _create_grant=no
+               fi
+
+               if [ "x$_create_grant" == "xno" ]; then
+                  if mysqladmin ping --host="$_voms_db_host" --port="$_vo_db_port" -u "$_vo_db_user" --pass="$_vo_db_pass" >/dev/null; then
+                     yaimlog DEBUG "Connected successfully to MySQL server $_voms_db_host as user $_vo_db_user"
+                     yaimlog DEBUG "Assuming correctly configured database access for $_vo_db_user"
+                  else
+                     yaimlog ERROR "Cannot connect to MySQL server $_voms_db_host as user $_vo_db_user."
+                     yaimlog ERROR "Cannot connect to MySQL server $_voms_db_host as user root"
+                     yaimlog ERROR "Cannot configure database access for the VO user"
+                     yaimlog ERROR "Please supply a valid password or configure the database privileges manually."
+                     yestr ${YEX_FUNCERR}
+                     yaimlog ERROR "${YERRORSTR}"
+                     exit ${YEX_FUNCERR}
+                  fi
+               fi
+            fi
+
+            yaimlog INFO "Checking VOMS database schema existence and deploying one if missing..."
+            /opt/glite/sbin/voms-db-deploy.py deploy --vo "$vo"
+            if [ $? -ne 0 ]; then
+               yaimlog ERROR "Cannot contact $_voms_db_host with user $_vo_db_user."
+               yaimlog ERROR "Please check whether the database server is up, the database >${_voms_db_name}<"
+               yaimlog ERROR "is created and >${_vo_db_user}< is granted read/write access from >${VOMS_HOST}<."
+               yestr ${YEX_FUNCERR}
+               yaimlog ERROR "${YERRORSTR}"
+               exit ${YEX_FUNCERR}
+            fi
+         fi
+
+         value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
+         if [ "x${value}" != "x" ]; then
+            if [ -f "$value" ]; then
+               yaimlog INFO "Adding default admin from ${value}"
+               /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
+            fi
+         else
+            if [ -n "${VOMS_ADMIN_CERT}" ]; then
+               if [ -f "${VOMS_ADMIN_CERT}" ]; then
+                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
+                  /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
+               fi
+            fi
+         fi
+
+         yaimlog DEBUG "Setting additional VOMS-ADMIN parameters"
+         _parameter_names=(voms.cafiles.period
+                           voms.auditing
+                           voms.pagination.user.max.results.per.page
+                           voms.pagination.group.max.results.per.page
+                           voms.pagination.role.max.results.per.page
+                           voms.pagination.attributes.max.results.per.page
+                           voms.request.vo_membership.lifetime
+                           voms.request.vo_membership.warn_when_expired
+                           voms.mkgridmap.translate_dn_email_format
+                           voms.webapp.always-show-full-dns)
+
+         _variable_names="VOMS_ADMIN_CA_RELOAD_PERIOD
+                          VOMS_ADMIN_AUDITING
+                          VOMS_ADMIN_PAGINATION_USER_MAX
+                          VOMS_ADMIN_PAGINATION_GROUP_MAX
+                          VOMS_ADMIN_PAGINATION_ROLE_MAX
+                          VOMS_ADMIN_PAGINATION_ATTR_MAX
+                          VOMS_ADMIN_MEMBERSHIP_REQUEST_LIFETIME
+                          VOMS_ADMIN_MEMBERSHIP_REQUEST_WARNINGS
+                          VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT
+                          VOMS_ADMIN_SHOW_FULL_DN"
+
+         process_parameters "voms.service.properties"
+
+         yaimlog DEBUG "Setting hibernate parameters"
+         _parameter_names=(hibernate.c3p0.idle_test_period
+                           hibernate.c3p0.min_size
+                           hibernate.c3p0.max_size
+                           hibernate.c3p0.max_statements
+                           hibernate.c3p0.timeout)
+
+         _variable_names="HIBERNATE_IDLE_TEST_PERIOD
+                          HIBERNATE_MIN_SIZE
+                          HIBERNATE_MAX_SIZE
+                          HIBERNATE_MAX_STATEMENTS
+                          HIBERNATE_TIMEOUT"
+
+         process_parameters "voms.database.properties"
+
+         yaimlog DEBUG "Start voms-admin"
+         ${GLITE_LOCATION}/etc/init.d/voms-admin stop ${vo}
+         ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
+
+      fi
+
+      yaimlog DEBUG "Saving a copy of the existing voms-core configuration file if any ..."
+      if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ]; then
+         mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf.old
+      fi
+      if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass ]; then
+         mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass.old
+      fi
+
+      vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
+
+      yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
+      mkdir -p ${GLITE_LOCATION}/etc/voms/${vo}
+
+      if [ "x$VOMS_ADMIN_INSTALL" == "xno" ] && [ "x$_vo_db_type" == "xoracle" ]; then
+         _voms_db_name="DB_VOMS"
+         _voms_connection_string=${ORACLE_CONNECTION_STRING}
+
+         _connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
+         cmsg="ORACLE connection string for this VO is: ${_connection_string}"
+         if [ -z "${_connection_string}" ]; then
+            cmsg="No VO specific ORACLE connection string"
+         fi
+         yaimlog DEBUG "${cmsg}"
+         yaimlog DEBUG "ORACLE global connection string: ${_voms_connection_string}"
+         if [ -n "${_connection_string}" ]; then
+            if [ "x${ORACLE_CONNECTION_STRING}" != "x${_connection_string}" ]; then
+               yaimlog DEBUG "Custom connection string is specified for this VO and it is not the same as the global one."
+               _voms_db_name=`echo "DB_VOMS_$vo" | tr '[:lower:]' '[:upper:]' | sed -e 's/-/_/g' -e 's/\./_/g'`
+               _voms_connection_string=$_connection_string
+            fi
+         fi
+         if [ "x${_voms_db_name}" != "xDB_VOMS" ]; then
+            yaimlog DEBUG "Output the connection string to tnsnames.ora. Name is: ${_voms_db_name}"
+            echo "${_voms_db_name}=${_voms_connection_string}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+         fi
+      fi
+
+      echo "--vo=${vo}" > ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      _vo_voms_core_port=`get_vo_param ${vo} VOMS_PORT`
+
+      echo "--port=${_vo_voms_core_port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--code=${_vo_voms_core_port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--uri=${VOMS_HOST}:${_vo_voms_core_port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+
+      _vo_voms_core_loglevel=`get_vo_param ${vo} VOMS_CORE_LOGLEVEL`
+      if [ -z "$_vo_voms_core_loglevel" ]; then
+         _vo_voms_core_loglevel=$VOMS_CORE_LOGLEVEL;
+      fi
+      echo "--loglevel=$_vo_voms_core_loglevel" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+
+      _vo_voms_core_logtype=`get_vo_param ${vo} VOMS_CORE_LOGTYPE`
+      if [ -z "$_vo_voms_core_logtype" ]; then
+         _vo_voms_core_logtype=$VOMS_CORE_LOGTYPE;
+      fi
+      echo "--logtype=$_vo_voms_core_logtype" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+
+      _vo_voms_core_newformat=`get_vo_param ${vo} VOMS_NEWFORMAT`
+      if [ -z "$_vo_voms_core_newformat" ]; then
+         _vo_voms_core_newformat=$VOMS_NEWFORMAT
+      fi
+      if [ "x$_vo_voms_core_newformat" == "xon" ]; then
+         echo "--newformat" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      fi
+
+      _vo_voms_core_logmax=`get_vo_param ${vo} VOMS_CORE_LOGMAX`
+      if [ -z "$_vo_voms_core_logmax" ]; then
+          _vo_voms_core_logmax=$VOMS_CORE_LOGMAX
+      fi
+      if [ -n "$_vo_voms_core_logmax" ]; then
+         echo "--logmax=$_vo_voms_core_logmax" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      fi
+
+      echo "--logfile=${GLITE_LOCATION_LOG}/voms.${vo}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--passfile=${GLITE_LOCATION}/etc/voms/${vo}/voms.pass" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+
+      if [ "x$_vo_db_type" == "xoracle" ]; then
+         echo "--sqlloc=${VOMS_ORACLE_LIBRARY}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      else
+         echo "--sqlloc=${VOMS_MYSQL_LIBRARY}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      fi
+
+      if [ "x${_vo_db_type}" == "xmysql" ]; then
+         _voms_db_name=`get_vo_param ${vo} VOMS_DB_NAME`
+         echo "--dbname=${_voms_db_name}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      else
+         _voms_db_name="DB_VOMS"
+         _connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
+         if [ -n "${_connection_string}" ]; then
+            if [ "x${ORACLE_CONNECTION_STRING}" != "x${_connection_string}" ]; then
+               _voms_db_name=`echo "DB_VOMS_$vo" | tr '[:lower:]' '[:upper:]' | sed -e 's/-/_/g' -e 's/\./_/g'`
+            fi
+         fi
+         echo "--dbname=${_voms_db_name}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      fi
+
+      # Cheking whether shortfqans is defined or not
+      value=`get_vo_param ${vo} VOMS_SHORT_FQANS`
+      if [ "x${value}" == "xon" ]; then
+         echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      else
+         if [ "x${VOMS_SHORT_FQANS}" == "xon" ]; then
+            echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         fi
+      fi
+
+      _vo_core_db_user=`get_vo_param ${vo} VOMS_CORE_DB_USER`
+      _vo_core_db_pass=`get_vo_param ${vo} VOMS_CORE_DB_PASS`
+      if [ -z "$_vo_core_db_user" ] || [ -z "$_vo_core_db_pass" ]; then
+         yaimlog INFO "User and password for read-only database access for VOMS-CORE not specified."
+         yaimlog INFO "Using the credentials for read-write access (VOMS-ADMIN)."
+         _vo_core_db_user=`get_vo_param ${vo} VOMS_DB_USER`
+         _vo_core_db_pass=`get_vo_param ${vo} VOMS_DB_PASS`
+      else
+         if [ "x$_vo_db_type" == "xmysql" ]; then
+            _vo_dba_user="root"
+            _vo_dba_pass=$MYSQL_PASSWORD
+            _vo_admin_db_user=`get_vo_param ${vo} VOMS_DB_USER`
+   
+            if [ -n "$_vo_dba_pass" ] && [ "x$_vo_core_db_user" != "x$_vo_admin_db_user" ] && \
+                  [ $_vo_is_local_mysql -eq 1 ]; then
+   
+               yaimlog INFO "Granting SELECT privilege to the VOMS-CORE database access user"
+    
+               output=`mysql -u "$_vo_dba_user" --host="$_voms_db_host" --port="$_vo_db_port" --pass="$_vo_dba_pass" "$_voms_db_name" \
+                             --exec "GRANT SELECT ON $_voms_db_name.* TO \
+                                     '$_vo_core_db_user'@'localhost' IDENTIFIED BY '$_vo_core_db_pass'" 2>&1`
+
+               if [ $? -ne 0 ]; then
+                  yaimlog INFO "Error granting SELECT priviledge to '$_vo_core_db_user'@'localhost'"
+                  yaimlog INFO "Error message was: "`echo $output | grep ERROR`
+               fi
+
+               output=`mysql --host="$_voms_db_host" --port="$_vo_db_port" -u "$_vo_dba_user" --pass="$_vo_dba_pass" "$_voms_db_name" \
+                             --exec "GRANT SELECT ON $_voms_db_name.* TO \
+                                     '$_vo_core_db_user'@'$(hostname)' IDENTIFIED BY '$_vo_core_db_pass'" 2>&1`
+               if [ $? -ne 0 ]; then
+                  yaimlog INFO "Error granting SELECT priviledge to '$_vo_core_db_user'@'$(hostname)'"
+                  yaimlog INFO "Error message was: "`echo $output | grep ERROR`
+               fi
+
+               output=`mysql --host="$_voms_db_host" --port="$_vo_db_port" -u "$_vo_dba_user" --pass="$_vo_dba_pass" "$_voms_db_name" \
+                             --exec "GRANT SELECT ON $_voms_db_name.* TO \
+                                     '$_vo_core_db_user'@'$(hostname -s)' IDENTIFIED BY '$_vo_core_db_pass'" 2>&1`
+               if [ $? -ne 0 ]; then
+                  yaimlog INFO "Error granting SELECT priviledge to '$_vo_core_db_user'@'$(hostname -s)'"
+                  yaimlog INFO "Error message was: "`echo $output | grep ERROR`
+               fi
+            fi
+         fi
+      fi
+      echo "--username=${_vo_core_db_user}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+
+      echo "$_vo_core_db_pass" > ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass
+      chmod 640 ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass
+
+   done
+
+   if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
+
+      yaimlog DEBUG "Starting tomcat"
+      /etc/rc.d/init.d/tomcat5 start
+      /sbin/chkconfig tomcat5 on
+
+      # The voms-admin script can't be chkconfig
+      # ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
+      # /sbin/chkconfig voms-admin on
+      # Add the voms-admin script in gLite
+      if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
+         touch ${GLITE_LOCATION}/etc/gLiteservices
+      fi
+
+      grep voms-admin ${GLITE_LOCATION}/etc/gLiteservices > /dev/null
+      if [ ! $? = 0 ] ; then
+         echo "${GLITE_LOCATION}/etc/init.d/voms-admin" >> ${GLITE_LOCATION}/etc/gLiteservices
+      fi
+   else
+      yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=no"
+      yaimlog DEBUG "Stopping tomcat"
+      /etc/rc.d/init.d/tomcat5 stop
+      /sbin/chkconfig tomcat5 off
+      sed -i -e '/^.*voms-admin$/ d' ${GLITE_LOCATION}/etc/gLiteservices
+   fi
+
+   yaimlog DEBUG "Check whether the log directory exists..."
+   if [ ! -d ${GLITE_LOCATION_LOG} ]; then
+      mkdir -p ${GLITE_LOCATION_LOG}
+   fi
+
+   for vo in ${VOS}; do
+      if [ ! -f ${GLITE_LOCATION_LOG}/voms.${vo} ]; then
+         yaimlog DEBUG "Creating voms.${vo} log file..."
+         touch ${GLITE_LOCATION_LOG}/voms.${vo}
+      fi
+   done
+
+   yaimlog DEBUG "Start voms core"
+   if [ ! -f /etc/init.d/voms ]; then
+      ln -s /opt/glite/etc/init.d/voms /etc/init.d/voms
+   fi
+
+   if [ ! -f /opt/glite/etc/profile.d/voms.sh ]; then
+      ln -s /opt/glite/etc/profile.d/grid-env.sh /opt/glite/etc/profile.d/voms.sh
+   fi
+
+   ${GLITE_LOCATION}/etc/init.d/voms stop
+   ${GLITE_LOCATION}/etc/init.d/voms start
+
+   # Add the voms script in gLite
+   # /sbin/chkconfig voms on
+   if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
+      touch ${GLITE_LOCATION}/etc/gLiteservices
+   fi
+   grep -v voms-admin ${GLITE_LOCATION}/etc/gLiteservices | grep voms > /dev/null
+   if [ ! $? = 0 ] ; then
+      echo "${GLITE_LOCATION}/etc/init.d/voms" >> ${GLITE_LOCATION}/etc/gLiteservices
+   fi
+
+   for vo in ${VOS}; do
+      chmod +r ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+   done
+}

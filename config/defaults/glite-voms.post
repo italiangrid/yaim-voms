@@ -17,12 +17,11 @@
 # limitations under the License.
 ##############################################################################
 #
-# NAME :        glite-voms
+# NAME :            glite-voms.post
 #
-# DESCRIPTION : This function contains the function list that configures the 
-#               mysql VOMS server.
-#
-# AUTHORS :     Maria.Alandes.Pradillo@cern.ch
+# DESCRIPTION : This function configures the default parameters for voms.
+
+# AUTHORS :     yaim-contact@cern.ch
 #
 # NOTES :
 #
@@ -30,13 +29,8 @@
 #
 ##############################################################################
 
-VOMS_mysql_FUNCTIONS="
-config_host_certs
-config_add_pool_env
-config_crl
-config_tomcat
-config_voms_admin_mysql
-config_voms_core
-config_glite_initd
-config_voms_logrotate
-"
+# Location of the database libraries
+
+VOMS_MYSQL_LIBRARY=${GLITE_LOCATION}/lib/libvomsmysql.so
+VOMS_ORACLE_LIBRARY=${GLITE_LOCATION}/lib/libvomsoracle.so
+

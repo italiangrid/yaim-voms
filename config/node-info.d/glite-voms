@@ -17,10 +17,10 @@
 # limitations under the License.
 ##############################################################################
 #
-# NAME :        glite-voms_oracle
+# NAME :        glite-voms
 #
 # DESCRIPTION : This function contains the function list that configures the 
-#               oracle VOMS server.
+#               mysql VOMS server.
 #
 # AUTHORS :     Maria.Alandes.Pradillo@cern.ch
 #
@@ -30,13 +30,16 @@
 #
 ##############################################################################
 
-VOMS_oracle_FUNCTIONS="
+VOMS_FUNCTIONS="
 config_host_certs
+config_edgusers
 config_add_pool_env
 config_crl
-config_tomcat
-config_voms_admin_oracle
-config_voms_core
+config_gip_only
+config_info_service_voms
+config_info_service_voms_admin
+config_voms
 config_glite_initd
 config_voms_logrotate
+config_bdii_only
 "
