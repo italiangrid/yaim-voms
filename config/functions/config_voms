@@ -357,7 +357,7 @@ config_voms () {
       fi
    fi
 
-   if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
+   if [ "x${VOMS_ADMIN_INSTALL}" == "xtrue" ]; then
       source ${FUNCTIONS_DIR}/config_secure_tomcat
       config_secure_tomcat_check
       config_secure_tomcat_setenv
@@ -402,7 +402,7 @@ config_voms () {
       _vo_db_pass=`get_vo_param ${vo} VOMS_DB_PASS`
 
 
-      if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
+      if [ "x${VOMS_ADMIN_INSTALL}" == "xtrue" ]; then
 
          yaimlog DEBUG "Configure mandatory parameters for voms admin for VO ${vo}"
          command=" --vo ${vo} --hostname ${VOMS_HOST} --dbtype ${_vo_db_type} --skip-voms-core "
@@ -471,15 +471,15 @@ config_voms () {
          fi
 
          value=`get_vo_param ${vo} VOMS_ADMIN_WEB_REGISTRATION_DISABLE`
-         if [ "x${value}" == "xyes" ]; then
+         if [ "x${value}" == "xtrue" ]; then
              command="${command} --disable-webui-requests "
          else
-             if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xyes" ] && [  "x${value}" != "xno" ]; then
+             if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xtrue" ] && [  "x${value}" != "xfalse" ]; then
                  command="${command} --disable-webui-requests "
              fi
          fi 
 
-         if [ "x${VOMS_ADMIN_VERBOSE}" == "xyes" ]; then
+         if [ "x${VOMS_ADMIN_VERBOSE}" == "xtrue" ]; then
              command="${command} --verbose"
          fi
 
@@ -513,10 +513,10 @@ config_voms () {
          fi
 
          value=`get_vo_param ${vo} VOMS_ADMIN_AUTH_READS`
-         if [ "x${value}" == "xyes" ]; then
+         if [ "x${value}" == "xtrue" ]; then
              command="${command} --read-access-for-authenticated-clients "
          else
-             if [ "x${VOMS_ADMIN_AUTH_READS}" == "xyes" ] && [ "x${value}" != "xno" ]; then
+             if [ "x${VOMS_ADMIN_AUTH_READS}" == "xtrue" ] && [ "x${value}" != "xfalse" ]; then
                  command="${command} --read-access-for-authenticated-clients "
              fi
          fi
@@ -532,7 +532,7 @@ config_voms () {
              exit ${YEX_FUNCERR}
          fi  
 
-         if [ "x$VOMS_DB_DEPLOY" != "xno" ]; then
+         if [ "x$VOMS_DB_DEPLOY" != "xfalse" ]; then
 
             if  [ "x$_vo_db_type" == "xmysql" ] && ( [ "x$_voms_db_host" == "xlocalhost" ] || \
                    [ "x$_voms_db_host" == "x$(hostname -s)" ] || [ "x$_voms_db_host" == "x$(hostname)" ] ) ; then
@@ -687,7 +687,7 @@ config_voms () {
       yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
       mkdir -p ${GLITE_LOCATION}/etc/voms/${vo}
 
-      if [ "x$VOMS_ADMIN_INSTALL" == "xno" ] && [ "x$_vo_db_type" == "xoracle" ]; then
+      if [ "x$VOMS_ADMIN_INSTALL" == "xfalse" ] && [ "x$_vo_db_type" == "xoracle" ]; then
          _voms_db_name="DB_VOMS"
          _voms_connection_string=${ORACLE_CONNECTION_STRING}
 
@@ -734,7 +734,7 @@ config_voms () {
       if [ -z "$_vo_voms_core_newformat" ]; then
          _vo_voms_core_newformat=$VOMS_NEWFORMAT
       fi
-      if [ "x$_vo_voms_core_newformat" == "xon" ]; then
+      if [ "x$_vo_voms_core_newformat" == "xtrue" ]; then
          echo "--newformat" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
       fi
 
@@ -771,10 +771,10 @@ config_voms () {
 
       # Cheking whether shortfqans is defined or not
       value=`get_vo_param ${vo} VOMS_SHORT_FQANS`
-      if [ "x${value}" == "xon" ]; then
+      if [ "x${value}" == "xtrue" ]; then
          echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
       else
-         if [ "x${VOMS_SHORT_FQANS}" == "xon" ] && [ "x${value}" != "xoff" ]; then
+         if [ "x${VOMS_SHORT_FQANS}" == "xtrue" ] && [ "x${value}" != "xfalse" ]; then
             echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
          fi
       fi
@@ -831,7 +831,7 @@ config_voms () {
 
    done
 
-   if [ "x${VOMS_ADMIN_INSTALL}" == "xyes" ]; then
+   if [ "x${VOMS_ADMIN_INSTALL}" == "xfalse" ]; then
 
       yaimlog DEBUG "Starting tomcat"
       /etc/rc.d/init.d/tomcat5 start
@@ -850,7 +850,7 @@ config_voms () {
          echo "${GLITE_LOCATION}/etc/init.d/voms-admin" >> ${GLITE_LOCATION}/etc/gLiteservices
       fi
    else
-      yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=no"
+      yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=false"
       yaimlog DEBUG "Stopping tomcat"
       /etc/rc.d/init.d/tomcat5 stop
       /sbin/chkconfig tomcat5 off
