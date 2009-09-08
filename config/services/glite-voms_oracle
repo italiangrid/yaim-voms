@@ -47,12 +47,6 @@ VO_<vo_name>_VOMS_DB_USER=user_name
 # Password of database user account.
 VO_<vo_name>_VOMS_DB_USER_PASSWORD=password
 
-# Hostname of the database server. Put 'localhost'
-# if you run the database on the same machine.
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_DB_HOST
-VOMS_ADMIN_DB_HOST=hostname
-
 # Host to which voms-admin-service-generated emails should
 # be submitted. Use 'localhost' if you have an fully configured SMTP
 # server running on this host. Otherwise specify the hostname of a working

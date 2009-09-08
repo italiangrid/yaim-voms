@@ -57,8 +57,6 @@ VOMS_CORE_TIMEOUT=86400
 # VO_<vo_name>_SHORT_FQANS
 VOMS_SHORT_FQANS="off"
 
-VOMS_NEWFORMAT="off"
-
 # Frequency of log file rotation for voms core.
 # Can be 'daily|weekly|monthly
 # This parameter can be specified per VO in the following way:
@@ -70,11 +68,41 @@ VOMS_CORE_LOGROTATE_PERIOD=daily
 # VO_<vo_name>_VOMS_CORE_LOGROTATE_LOGNUMBER
 VOMS_CORE_LOGROTATE_LOGNUMBER=90
 
+# Database type. Allowed values are "mysql" and "oracle"
+# This parameter can be set globally and then overridden on a
+# per-VO basis.
 VOMS_DB_TYPE=mysql
 
+# Sets the level of verbosity of log messages (voms-core). Acceptable 
+# values are:
+#  1 : (LEV_NONE) - do not log anything
+#  2 : (LEV_ERROR) - the default, logs only error conditions
+#  3 : (LEV_WARNINGS) - logs also warning messages
+#  4 : (LEV_INFO) - logs also general informational messages
+#  5 : (LEV_DEBUG) - logs also a lot of debug messages. Setting this level 
+#                    of verbosity overwrites the value of the -logtype 
+#                    option to 255.
+# Higher values include all messages printed by lower ones, and values not 
+# documented here are translated as the highest level possible, LEV_DEBUG
 VOMS_CORE_LOGLEVEL=4
 
+# Sets the type of messages that will be loggged. Acceptable values are:
+#  1 - (STARTUP), print startup messages.
+#  2 - (REQUEST), print messages during the request interpretation phase.
+#  4 - (RESULT), print messages during the result sending phase.
+#  This values can be ORed together to indicate that all the corresponding 
+#  types of messages are required. The default values is 255.
 VOMS_CORE_LOGTYPE=7
+
+
+# This  forces  the  server to generate ACs in the new (correct) format. 
+# This is meant as a compatibility feature to ease migration while the 
+# servers upgrade to the new version.
+#
+# Because of bug #53314, this option should not be turned on.
+#
+VOMS_NEWFORMAT="off"
+
 
 ##############
 # VOMS_ADMIN #
@@ -98,34 +126,44 @@ VOMS_ADMIN_DEPLOY_DATABASE=no
 # Run voms-admin-configure with --verbose
 VOMS_ADMIN_VERBOSE=yes
 
-VOMS_ADMIN_SHOW_FULL_DN=true
+# If "true", the VOMS-ADMIN webui always show full DNs (instead of 
+# just the first CN)
+VOMS_ADMIN_SHOW_FULL_DN=false
 
+# Should voms-admin generate gridmapfiles that encode the
+# email part of the DN using the "emailAddress" format in addition
+# to the "Email=" format used by default?
 VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT=false
 
+# Should voms-admin send a warning email to the user when
+# his/her uncorfimed request is removed from the database?
 VOMS_ADMIN_REQUEST_WARNINGS=true
 
+# Time in seconds that unconfirmed requests are kept inside the voms database.
 VOMS_ADMIN_REQUEST_LIFETIME=86400
 
+# voms ca updater period in seconds
 VOMS_ADMIN_CA_RELOAD_PERIOD=1800
 
+# Enable/disable the voms auditing facility
 VOMS_ADMIN_AUDITING=false
 
+# should the VOs be configured to be read accessible for authenticated clients
+# (mkgridmap clients need this)
 VOMS_ADMIN_AUTH_READS=true
 
+# voms pagination options (voms-admin web interface)
 VOMS_ADMIN_PAGINATION_USER_MAX=10
-
 VOMS_ADMIN_PAGINATION_GROUP_MAX=10
-
 VOMS_ADMIN_PAGINATION_ROLE_MAX=10
-
 VOMS_ADMIN_PAGINATION_ATTR_MAX=10
 
 # VOMS ADMIN SAML Service
 #
 # The lifetime (expressed in minutes) of SAML attribute assertions
-# issued by the VOMS SAML attribute authority
+# issued by the VOMS SAML attribute authority, location of the certificate
+# and the key for the AA
 VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME=720
-
 VOMS_ADMIN_SAML_AA_CERTIFICATE=/etc/grid-security/tomcat-cert.pem
 VOMS_ADMIN_SAML_AA_KEY=/etc/grid-security/tomcat-key.pem
 
@@ -172,6 +210,7 @@ VOMS_ADMIN_ORACLE_CLIENT=/usr/lib/oracle/10.2.0.1/client
 # Hibernate #
 #############
 
+# These can be set both globally and on a per-VO basis
 HIBERNATE_IDLE_TEST_PERIOD=100
 HIBERNATE_MIN_SIZE=5
 HIBERNATE_MAX_SIZE=100

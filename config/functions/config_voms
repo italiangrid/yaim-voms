@@ -110,7 +110,7 @@ config_voms_check ()
       fi
 
       _db_host=`get_vo_param ${vo} VOMS_DB_HOST`
-      if [ -z "$_db_host" ] && [ -z "$VOMS_DB_HOST" ]; then
+      if [ -z "$_db_host" ] && [ -z "$VOMS_DB_HOST" ] && [ "x$_db_type" == "xmysql" ]; then
          yaimlog ERROR "The DB_HOST for VO ${vo} is not known"
          exit ${YEX_CONFFILE}
       fi
@@ -123,6 +123,20 @@ config_voms_check ()
          fi
       fi
 
+      value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
+      if [ "x${value}" != "x" ]; then
+         if ! [ -f "$value" ]; then
+            yaimlog ERROR "Cannot find default admin certificate location: $value"
+            exit ${YEX_CONFFILE}
+         fi
+      else
+         if [ -n "${VOMS_ADMIN_CERT}" ]; then
+            if ! [ -f "${VOMS_ADMIN_CERT}" ]; then
+               yaimlog INFO "Cannot find default admin certificate location: $VOMS_ADMIN_CERT"
+               exit ${YEX_CONFFILE}
+            fi
+         fi
+      fi
    done
 
    if [ ! "${VOMS_ADMIN_SMTP_HOST}" ]; then 
@@ -190,7 +204,7 @@ process_parameters () {
       fi
       if [ -n "$value" ]; then
          if grep -q "^[ \t]*$name" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1; then
-            if [ "x$1" == "x$voms.service.properties" ]; then
+            if [ "x$1" == "xvoms.service.properties" ]; then
                sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1 = $value/" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
             else
                sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1=$value/" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
@@ -460,7 +474,7 @@ config_voms () {
          if [ "x${value}" == "xyes" ]; then
              command="${command} --disable-webui-requests "
          else
-             if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xyes" ]; then
+             if [ "x${VOMS_ADMIN_WEB_REGISTRATION_DISABLE}" == "xyes" ] && [  "x${value}" != "xno" ]; then
                  command="${command} --disable-webui-requests "
              fi
          fi 
@@ -496,6 +510,15 @@ config_voms () {
 
          if [ "x$_vo_db_port" != "x3306" ] && [ "x$_vo_db_type" == "xmysql" ]; then
             command="${command} --dbport ${_vo_db_port}"
+         fi
+
+         value=`get_vo_param ${vo} VOMS_ADMIN_AUTH_READS`
+         if [ "x${value}" == "xyes" ]; then
+             command="${command} --read-access-for-authenticated-clients "
+         else
+             if [ "x${VOMS_ADMIN_AUTH_READS}" == "xyes" ] && [ "x${value}" != "xno" ]; then
+                 command="${command} --read-access-for-authenticated-clients "
+             fi
          fi
 
          yaimlog DEBUG "Configure voms-admin for VO ${vo}"
@@ -751,7 +774,7 @@ config_voms () {
       if [ "x${value}" == "xon" ]; then
          echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
       else
-         if [ "x${VOMS_SHORT_FQANS}" == "xon" ]; then
+         if [ "x${VOMS_SHORT_FQANS}" == "xon" ] && [ "x${value}" != "xoff" ]; then
             echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
          fi
       fi
