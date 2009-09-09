@@ -828,10 +828,10 @@ config_voms () {
 
    done
 
-   if [ "x${VOMS_ADMIN_INSTALL}" == "xfalse" ]; then
+   if [ "x${VOMS_ADMIN_INSTALL}" == "xtrue" ]; then
 
       yaimlog DEBUG "Starting tomcat"
-      /etc/rc.d/init.d/tomcat5 start
+      /etc/rc.d/init.d/tomcat5 restart
       /sbin/chkconfig tomcat5 on
 
       # The voms-admin script can't be chkconfig
@@ -847,7 +847,7 @@ config_voms () {
          echo "${GLITE_LOCATION}/etc/init.d/voms-admin" >> ${GLITE_LOCATION}/etc/gLiteservices
       fi
    else
-      yaimlog DEBUG "voms admin is not going to be configured since VOMS_ADMIN_INSTALL=false"
+      yaimlog DEBUG "voms admin will not be configured since VOMS_ADMIN_INSTALL=false"
       yaimlog DEBUG "Stopping tomcat"
       /etc/rc.d/init.d/tomcat5 stop
       /sbin/chkconfig tomcat5 off
