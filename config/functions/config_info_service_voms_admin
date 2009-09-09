@@ -46,7 +46,7 @@ config_info_service_voms_admin () {
 
   SERVICE_LC=`echo ${SERVICE} | tr '[:upper:]' '[:lower:]'`
 
-  if [ "x${VOMS_ADMIN_INSTALL}" == "xno" ]; then
+  if [ "x${VOMS_ADMIN_INSTALL}" == "xfalse" ]; then
 
      yaimlog DEBUG "VOMS ADMIN will not be configured on this node. Removing GIP configuration if exists."
 
