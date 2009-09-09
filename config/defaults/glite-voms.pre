@@ -55,7 +55,7 @@ VOMS_CORE_TIMEOUT=86400
 # i.e. attribute: /<vo-name>
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_SHORT_FQANS
-VOMS_SHORT_FQANS="false"
+VOMS_SHORT_FQANS=false
 
 # Frequency of log file rotation for voms core.
 # Can be 'daily|weekly|monthly
@@ -101,7 +101,7 @@ VOMS_CORE_LOGTYPE=7
 #
 # Because of bug #53314, this option should not be set to 'true'.
 #
-VOMS_NEWFORMAT="false"
+VOMS_NEWFORMAT=false
 
 
 ##############
@@ -109,7 +109,7 @@ VOMS_NEWFORMAT="false"
 ##############
 
 # Set this variable to 'false' if you don't want to configure the voms-admin.
-VOMS_ADMIN_INSTALL=false
+VOMS_ADMIN_INSTALL=true
 
 # Set this variable to 'false' if you want to disable the user registration 
 # via the voms-admin web interface.

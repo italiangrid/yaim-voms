@@ -123,6 +123,17 @@ config_voms_check ()
          fi
       fi
 
+      if [ -z "$ORACLE_CONNECTION_STRING" ]; then
+         _vo_connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
+         if [ -z "${_vo_connection_string}" ] && [ "x$_db_type" == "xoracle" ]; then
+            yaimlog ERROR "The ORACLE connection string for VO <${vo_name}> is not set (VO_${vo_name}_ORACLE_CONNECTION_STRING)".
+            yaimlog ERROR "Global value for ORACLE_CONNECTION_STRING is not set as well."
+            yaimlog ERROR "Don't know how to establish a database connection for VO <${vo_name}>. "
+            yaimlog ERROR "Abort!"
+            exit 1
+         fi
+      fi
+
       value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
       if [ "x${value}" != "x" ]; then
          if ! [ -f "$value" ]; then
@@ -158,20 +169,6 @@ config_voms_check ()
       if [ $? -eq 1 ]; then
          exit ${YEX_CONFFILE}
       fi
-   fi
-
-   if [ -z "$ORACLE_CONNECTION_STRING" ]; then
-      for vo in ${VOS}; do
-         _vo_connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
-         if [ -z "${_vo_connection_string}" ]; then
-            vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
-            yaimlog ERROR "The ORACLE connection string for VO <${vo_name}> is not set (VO_${vo_name}_ORACLE_CONNECTION_STRING)". 
-            yaimlog ERROR "Global value for ORACLE_CONNECTION_STRING is not set as well."
-            yaimlog ERROR "Don't know how to establish a database connection for VO <${vo_name}>. "
-            yaimlog ERROR "Abort!"
-            exit 1
-         fi
-      done
    fi
 
    return 0
