@@ -138,10 +138,10 @@ VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT=false
 
 # Should voms-admin send a warning email to the user when
 # his/her uncorfimed request is removed from the database?
-VOMS_ADMIN_REQUEST_WARNINGS=true
+VOMS_ADMIN_MEMBERSHIP_REQUEST_WARNINGS=true
 
 # Time in seconds that unconfirmed requests are kept inside the voms database.
-VOMS_ADMIN_REQUEST_LIFETIME=86400
+VOMS_ADMIN_MEMBERSHIP_REQUEST_LIFETIME=86400
 
 # voms ca updater period in seconds
 VOMS_ADMIN_CA_RELOAD_PERIOD=1800

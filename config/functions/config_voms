@@ -735,6 +735,12 @@ config_voms () {
          echo "--newformat" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
       fi
 
+      _vo_voms_core_timeout=`get_vo_param ${vo} VOMS_CORE_TIMEOUT`
+      if [ -z "$_vo_voms_core_timeout" ]; then
+         _vo_voms_core_timeout=$VOMS_CORE_TIMEOUT;
+      fi
+      echo "--timeout=$_vo_voms_core_timeout" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+
       _vo_voms_core_logmax=`get_vo_param ${vo} VOMS_CORE_LOGMAX`
       if [ -z "$_vo_voms_core_logmax" ]; then
           _vo_voms_core_logmax=$VOMS_CORE_LOGMAX
