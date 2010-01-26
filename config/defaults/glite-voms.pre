@@ -205,7 +205,11 @@ VOMS_ADMIN_ORACLE_MAX_CONNECTIONS=20
 VOMS_ADMIN_ORACLE_START_CONNECTIONS=10
 
 # Location of the Oracle Instantclient installation
-VOMS_ADMIN_ORACLE_CLIENT=/usr/lib/oracle/10.2.0.1/client
+if [ `uname -m` == "x86_64" ]; then
+   ORACLE_CLIENT=/usr/lib64/oracle/10.2.0.4/client
+else
+   ORACLE_CLIENT=/usr/lib/oracle/10.2.0.4/client
+fi
 
 #############
 # Hibernate #
@@ -230,5 +234,7 @@ TOMCAT_USER=${TOMCAT_USER:-tomcat}
 # Python #
 ##########
 
-VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
-
+VOMS_PYTHONPATH=/opt/ZSI/lib/python2.4/site-packages
+if ! [ -d $VOMS_PYTHONPATH ]; then
+   VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
+fi

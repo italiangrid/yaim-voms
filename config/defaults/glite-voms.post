@@ -31,6 +31,11 @@
 
 # Location of the database libraries
 
-VOMS_MYSQL_LIBRARY=${GLITE_LOCATION}/lib/libvomsmysql.so
-VOMS_ORACLE_LIBRARY=${GLITE_LOCATION}/lib/libvomsoracle.so
+if [ `uname -m` == "x86_64" ]; then
+   VOMS_MYSQL_LIBRARY=${GLITE_LOCATION}/lib64/libvomsmysql.so
+   VOMS_ORACLE_LIBRARY=${GLITE_LOCATION}/lib64/libvomsoracle.so
+else
+   VOMS_MYSQL_LIBRARY=${GLITE_LOCATION}/lib/libvomsmysql.so
+   VOMS_ORACLE_LIBRARY=${GLITE_LOCATION}/lib/libvomsoracle.so
+fi
 
