@@ -516,7 +516,7 @@ config_voms () {
          else
             command="${command} --aa-cert ${TOMCAT_HOSTCERT_LOCATION} --aa-key ${TOMCAT_HOSTKEY_LOCATION}"
          fi
-
+    
          if [ -n "${VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME}" ]; then
             command="${command} --saml-max-assertion-lifetime ${VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME}"
          fi
@@ -550,7 +550,7 @@ config_voms () {
          if [ "x$VOMS_DB_DEPLOY" != "xfalse" ]; then
 
             if  [ "x$_vo_db_type" == "xmysql" ] && ( [ "x$_voms_db_host" == "xlocalhost" ] || \
-                   [ "x$_voms_db_host" == "x$(hostname -s)" ] || [ "x$_voms_db_host" == "x$(hostname)" ] ) ; then
+                   [ "x$_voms_db_host" == "x$(hostname -s)" ] || [ "x$_voms_db_host" == "x$(hostname -f)" ] ) ; then
 
                _create_grant=yes
 
@@ -576,7 +576,7 @@ config_voms () {
 
                      if ! mysql -u root --host="$_voms_db_host" --port="$_vo_db_port" --pass="$MYSQL_PASSWORD" \
                                                                  --exec "GRANT ALL PRIVILEGES ON $_voms_db_name.* \
-                                                                         TO $_vo_db_user@'`hostname`' IDENTIFIED BY \
+                                                                         TO $_vo_db_user@'`hostname -f`' IDENTIFIED BY \
                                                                          '$_vo_db_pass'" >/dev/null ; then
                            yaimlog ERROR "Error granting privileges on $_voms_db_name to $_vo_db_user"
                            yestr ${YEX_FUNCERR}
@@ -837,9 +837,9 @@ config_voms () {
 
                output=`mysql --host="$_voms_db_host" --port="$_vo_db_port" -u "$_vo_dba_user" --pass="$_vo_dba_pass" "$_voms_db_name" \
                              --exec "GRANT SELECT ON $_voms_db_name.* TO \
-                                     '$_vo_core_db_user'@'$(hostname -s)' IDENTIFIED BY '$_vo_core_db_pass'" 2>&1`
+                                     '$_vo_core_db_user'@'$(hostname -f)' IDENTIFIED BY '$_vo_core_db_pass'" 2>&1`
                if [ $? -ne 0 ]; then
-                  yaimlog INFO "Error granting SELECT priviledge to '$_vo_core_db_user'@'$(hostname -s)'"
+                  yaimlog INFO "Error granting SELECT priviledge to '$_vo_core_db_user'@'$(hostname -f)'"
                   yaimlog INFO "Error message was: "`echo $output | grep ERROR`
                fi
             fi
