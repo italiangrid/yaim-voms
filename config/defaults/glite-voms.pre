@@ -111,6 +111,13 @@ VOMS_NEWFORMAT=false
 # Set this variable to 'false' if you don't want to configure the voms-admin.
 VOMS_ADMIN_INSTALL=true
 
+# The path of the certificate file (in pem format) of an initial VO administrator. 
+# The VOs will be set up so that this user has full VO administration privileges. 
+# This parameter can be specified per VO in the following way: VO_<vo-name>_VOMS_ADMIN_CERT
+# 
+# The default value is to create an administrator for the local host certificate.
+VOMS_ADMIN_CERT=/etc/grid-security/hostcert.pem
+
 # Set this variable to 'false' if you want to disable the user registration 
 # via the voms-admin web interface.
 # This parameter can be specified per VO in the following way:

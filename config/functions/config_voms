@@ -231,11 +231,6 @@ config_tomcat_voms () {
            >> ${CATALINA_HOME}/conf/tomcat5.conf
     fi
 
-    # Removing javamail from CATALINA_HOME/common/lib, conflict with voms-admin shipped mailer
-    if [ -e $CATALINA_HOME/common/lib/[javamail].jar ]; then
-       rm -f $CATALINA_HOME/common/lib/[javamail].jar
-    fi
-
     # LD_LIBRARY_PATH already contains the oracle libs from the yaimgridpath command
     if ! grep -q "^export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
        echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}/lib$LIBSUFFIX\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
@@ -688,7 +683,11 @@ config_voms () {
          ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
 
       fi
-
+      
+      yaimlog DEBUG "Starting VOMSES web application"
+      ${GLITE_LOCATION}/etc/init.d/voms-admin stop-siblings
+      sleep 5; ${GLITE_LOCATION}/etc/init.d/voms-admin start-siblings
+      
       yaimlog DEBUG "Saving a copy of the existing voms-core configuration file if any ..."
       if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ]; then
          mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf.old
