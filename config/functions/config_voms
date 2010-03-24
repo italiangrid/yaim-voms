@@ -621,22 +621,22 @@ config_voms () {
                yaimlog ERROR "${YERRORSTR}"
                exit ${YEX_FUNCERR}
             fi
-         fi
-
-         value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
-         if [ "x${value}" != "x" ]; then
-            if [ -f "$value" ]; then
-               yaimlog INFO "Adding default admin from ${value}"
-               /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
-            fi
-         else
-            if [ -n "${VOMS_ADMIN_CERT}" ]; then
-               if [ -f "${VOMS_ADMIN_CERT}" ]; then
-                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
-                  /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
-               fi
-            fi
-         fi
+         	
+			value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
+	        if [ "x${value}" != "x" ]; then
+	            if [ -f "$value" ]; then
+	               yaimlog INFO "Adding default admin from ${value}"
+	               /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
+	            fi
+	        else
+	            if [ -n "${VOMS_ADMIN_CERT}" ]; then
+	               if [ -f "${VOMS_ADMIN_CERT}" ]; then
+	                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
+	                  /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
+	               fi
+	            fi
+	        fi
+		 fi
 
          yaimlog DEBUG "Setting additional VOMS-ADMIN parameters"
          _parameter_names=(voms.cafiles.period
