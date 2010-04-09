@@ -315,6 +315,7 @@ config_voms () {
       init_tnsnames
    fi
 
+
    if [ "x$mysqlUsed" == "xyes" ]; then
 
       yaimlog INFO "MySQL configuration"
@@ -364,6 +365,7 @@ config_voms () {
          if [ $mysql_restart_needed -eq 1 ]; then
             service mysqld restart
          fi
+         /sbin/chkconfig mysqld on
       fi
    fi
 
