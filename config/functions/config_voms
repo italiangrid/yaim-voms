@@ -227,25 +227,25 @@ config_tomcat_voms () {
 
     yaimlog DEBUG "Setting OCI support for tomcat"
     if ! grep -q "^JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
-       echo "JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}/lib$LIBSUFFIX\"" \
+       echo "JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}/lib\"" \
            >> ${CATALINA_HOME}/conf/tomcat5.conf
     fi
 
     # LD_LIBRARY_PATH already contains the oracle libs from the yaimgridpath command
     if ! grep -q "^export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
-       echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}/lib$LIBSUFFIX\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+       echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
     fi
 
     if ! grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
         echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
     fi
   
-    if [ -f ${ORACLE_CLIENT}/lib$LIBSUFFIX/ojdbc14.jar ]; then
+    if [ -f ${ORACLE_CLIENT}/lib/ojdbc14.jar ]; then
        if ! [ -e ${CATALINA_HOME}/common/lib/ojdbc14.jar ]; then
-          cp ${ORACLE_CLIENT}/lib$LIBSUFFIX/ojdbc14.jar ${CATALINA_HOME}/common/lib
+          cp ${ORACLE_CLIENT}/lib/ojdbc14.jar ${CATALINA_HOME}/common/lib
        fi
     else
-        yaimlog ERROR "${ORACLE_CLIENT}/lib$LIBSUFFIX/ojdbc14.jar doesn't exist and it's needed to configure the OCI support in Tomcat"
+        yaimlog ERROR "${ORACLE_CLIENT}/lib/ojdbc14.jar doesn't exist and it's needed to configure the OCI support in Tomcat"
         yestr ${YEX_NOSUCHFILE}
         yaimlog ERROR "${YERRORSTR}"
         exit ${YEX_NOSUCHFILE}
@@ -299,7 +299,7 @@ config_voms_setenv () {
    fi
 
    yaimgridpath_prepend LD_LIBRARY_PATH ${GLOBUS_LOCATION}/lib 
-   yaimgridpath_prepend LD_LIBRARY_PATH ${ORACLE_CLIENT}/lib$LIBSUFFIX 
+   yaimgridpath_prepend LD_LIBRARY_PATH ${ORACLE_CLIENT}/lib 
    yaimgridpath_prepend PYTHONPATH ${VOMS_PYTHONPATH}
 
    yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
@@ -314,7 +314,6 @@ config_voms () {
       yaimlog DEBUG "Oracle used: $oracleUsed"
       init_tnsnames
    fi
-
 
    if [ "x$mysqlUsed" == "xyes" ]; then
 
