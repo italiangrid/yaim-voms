@@ -175,6 +175,14 @@ VOMS_ADMIN_SAML_MAX_ASSERTION_LIFETIME=720
 VOMS_ADMIN_SAML_AA_CERTIFICATE=/etc/grid-security/tomcat-cert.pem
 VOMS_ADMIN_SAML_AA_KEY=/etc/grid-security/tomcat-key.pem
 
+# VOMS ADMIN WEB SERVICE CROSS SITE REQUEST FORGERY GUARD
+#
+# VOMS Admin now implements CSRF attacks mitigation on the web
+# service interface. The CSRF guard can be switched off by putting it
+# in "log only" mode.
+#
+VOMS_ADMIN_WS_CSRF_LOG_ONLY=true
+
 #########
 # Mysql #
 #########

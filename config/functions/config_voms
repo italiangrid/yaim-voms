@@ -649,7 +649,9 @@ config_voms () {
                            voms.request.vo_membership.lifetime
                            voms.request.vo_membership.warn_when_expired
                            voms.mkgridmap.translate_dn_email_format
-                           voms.webapp.always-show-full-dns)
+                           voms.webapp.always-show-full-dns
+                           voms.csrf.log_only)
+                           
 
          _variable_names="VOMS_ADMIN_CA_RELOAD_PERIOD
                           VOMS_ADMIN_AUDITING
@@ -660,7 +662,8 @@ config_voms () {
                           VOMS_ADMIN_MEMBERSHIP_REQUEST_LIFETIME
                           VOMS_ADMIN_MEMBERSHIP_REQUEST_WARNINGS
                           VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT
-                          VOMS_ADMIN_SHOW_FULL_DN"
+                          VOMS_ADMIN_SHOW_FULL_DN
+                          VOMS_ADMIN_WS_CSRF_LOG_ONLY"
 
          process_parameters "voms.service.properties"
 
