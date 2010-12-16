@@ -137,7 +137,7 @@ else
                clientAuth="true" sslProtocol="TLS" />
 
     <Engine name="Catalina" defaultHost="localhost">
-      <Host name="localhost" appBase="webapps" />
+      <Host name="localhost" appBase="webapps" unpackWARs="false" />
     </Engine>
   </Service>
 </Server>
