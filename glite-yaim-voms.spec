@@ -2,9 +2,9 @@
 %define _topdir %{topdir} 
 Summary: glite-yaim-voms module configures the VOMS server. 
 Name: glite-yaim-voms
-Version: 1.0.0
-Vendor: EGEE
+Version: 0.0.0
 Release: 1
+Vendor: EGEE
 License: EGEE
 Group: EGEE
 Source: %{name}.src.tgz
