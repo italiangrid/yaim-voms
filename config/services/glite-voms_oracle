@@ -38,14 +38,14 @@ VOMS_HOST=my-voms.my-domain
 VO_<vo_name>_VOMS_PORT=port_number
 
 # Database name to be used to store VOMS information.
-# Required on oracle installations, refers to the tns alias associated with the db.
+# On oracle installations, refers to the tns alias associated with the db.
 VO_<vo_name>_VOMS_DB_NAME=db_name
 
 # Name of database user.
 VO_<vo_name>_VOMS_DB_USER=user_name
 
 # Password of database user account.
-VO_<vo_name>_VOMS_DB_USER_PASSWORD=password
+VO_<vo_name>_VOMS_DB_PASS=password
 
 # Host to which voms-admin-service-generated emails should
 # be submitted. Use 'localhost' if you have an fully configured SMTP

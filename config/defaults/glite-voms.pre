@@ -118,7 +118,7 @@ VOMS_ADMIN_INSTALL=true
 # The default value is to create an administrator for the local host certificate.
 VOMS_ADMIN_CERT=/etc/grid-security/hostcert.pem
 
-# Set this variable to 'false' if you want to disable the user registration 
+# Set this variable to 'true' if you want to disable the user registration 
 # via the voms-admin web interface.
 # This parameter can be specified per VO in the following way:
 # VO_<vo_name>_VOMS_ADMIN_USER_REGISTRATION
@@ -134,8 +134,8 @@ VOMS_ADMIN_DEPLOY_DATABASE=true
 # Run voms-admin-configure with --verbose
 VOMS_ADMIN_VERBOSE=true
 
-# If "true", the VOMS-ADMIN webui always show full DNs (instead of 
-# just the first CN)
+# If "true", the VOMS-ADMIN web interface always show full DNs, instead of providing
+# a convenience formatting that shows the CN and displays the full DNs when clicked. 
 VOMS_ADMIN_SHOW_FULL_DN=false
 
 # Should voms-admin generate gridmapfiles that encode the
@@ -242,7 +242,6 @@ HIBERNATE_TIMEOUT=100
 ##########
 
 CATALINA_HOME=/usr/share/tomcat5
-
 TOMCAT_USER=${TOMCAT_USER:-tomcat}
 
 ##########
