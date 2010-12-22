@@ -121,7 +121,7 @@ VOMS_ADMIN_CERT=/etc/grid-security/hostcert.pem
 # Set this variable to 'true' if you want to disable the user registration 
 # via the voms-admin web interface.
 # This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_USER_REGISTRATION
+# VO_<vo_name>_VOMS_ADMIN_WEB_REGISTRATION_DISABLE
 VOMS_ADMIN_WEB_REGISTRATION_DISABLE=false
 
 # If set to 'true' it will call voms-db-deploy for VOMS database schema deployment.
