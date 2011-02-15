@@ -26,7 +26,8 @@ install:
 	@install -m 0644 config/functions/config* $(prefix)/yaim/functions
 	@install -m 0644 config/node-info.d/glite* $(prefix)/yaim/node-info.d
 	@install -m 0644 config/services/glite* $(prefix)/yaim/examples/siteinfo/services/.
-	@install -m 0644 config/defaults/* $(prefix)/yaim/defaults
+	@install -m 0644 config/defaults/*.pre $(prefix)/yaim/defaults
+	@install -m 0644 config/defaults/*.post $(prefix)/yaim/defaults
 
 
 clean::
