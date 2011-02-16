@@ -262,7 +262,7 @@ config_tomcat_voms () {
   fi
 
   if ! grep "^JAVA_ENDORSED_DIRS" ${CATALINA_HOME}/conf/tomcat5.conf | grep -q voms-admin; then
-     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:/opt/glite/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:$GLITE_LOCATION/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
   yaimlog DEBUG "Configure Tomcat memory size"
@@ -613,7 +613,7 @@ config_voms () {
             fi
 
             yaimlog INFO "Checking VOMS database schema existence and deploying one if missing..."
-            /opt/glite/sbin/voms-db-deploy.py deploy --vo "$vo"
+            $GLITE_LOCATION/sbin/voms-db-deploy.py deploy --vo "$vo"
             if [ $? -ne 0 ]; then
                yaimlog ERROR "Cannot contact $_voms_db_host with user $_vo_db_user."
                yaimlog ERROR "Please check whether the database server is up, the database >${_voms_db_name}<"
@@ -627,13 +627,13 @@ config_voms () {
 	        if [ "x${value}" != "x" ]; then
 	            if [ -f "$value" ]; then
 	               yaimlog INFO "Adding default admin from ${value}"
-	               /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
+	               $GLITE_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
 	            fi
 	        else
 	            if [ -n "${VOMS_ADMIN_CERT}" ]; then
 	               if [ -f "${VOMS_ADMIN_CERT}" ]; then
 	                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
-	                  /opt/glite/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
+	                  $GLITE_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
 	               fi
 	            fi
 	        fi
@@ -683,14 +683,14 @@ config_voms () {
          process_parameters "voms.database.properties"
 
          yaimlog DEBUG "Start voms-admin"
-         ${GLITE_LOCATION}/etc/init.d/voms-admin stop ${vo}
-         ${GLITE_LOCATION}/etc/init.d/voms-admin start ${vo}
+         /etc/init.d/voms-admin stop ${vo}
+         /etc/init.d/voms-admin start ${vo}
 
       fi
       
       yaimlog DEBUG "Starting VOMSES web application"
-      ${GLITE_LOCATION}/etc/init.d/voms-admin stop-siblings
-      sleep 5; ${GLITE_LOCATION}/etc/init.d/voms-admin start-siblings
+      /etc/init.d/voms-admin stop-siblings
+      sleep 5; /etc/init.d/voms-admin start-siblings
       
       yaimlog DEBUG "Saving a copy of the existing voms-core configuration file if any ..."
       if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ]; then
@@ -862,7 +862,7 @@ config_voms () {
       /sbin/chkconfig tomcat5 on
 
       # The voms-admin script can't be chkconfig
-      # ln -s /opt/glite/etc/init.d/voms-admin /etc/init.d/voms-admin
+      # ln -s $GLITE_LOCATION/etc/init.d/voms-admin /etc/init.d/voms-admin
       # /sbin/chkconfig voms-admin on
       # Add the voms-admin script in gLite
       if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
@@ -895,11 +895,11 @@ config_voms () {
 
    yaimlog DEBUG "Start voms core"
    if [ ! -f /etc/init.d/voms ]; then
-      ln -s /opt/glite/etc/init.d/voms /etc/init.d/voms
+      ln -s $GLITE_LOCATION/etc/init.d/voms /etc/init.d/voms
    fi
 
-   if [ ! -f /opt/glite/etc/profile.d/voms.sh ]; then
-      ln -s /opt/glite/etc/profile.d/grid-env.sh /opt/glite/etc/profile.d/voms.sh
+   if [ ! -f $GLITE_LOCATION/etc/profile.d/voms.sh ]; then
+      ln -s $GLITE_LOCATION/etc/profile.d/grid-env.sh $GLITE_LOCATION/etc/profile.d/voms.sh
    fi
 
    ${GLITE_LOCATION}/etc/init.d/voms stop

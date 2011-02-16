@@ -146,16 +146,21 @@ chown $TOMCAT_USER:$TOMCAT_USER /etc/tomcat5/server.xml
 fi
 
 yaimlog DEBUG "Copy log4j-trustmanager.properties into place"
-cp -f /opt/glite/etc/glite-security-trustmanager/log4j-trustmanager.properties /etc/tomcat5/
+
+cp -f /var/lib/trustmanager-tomcat/log4j-trustmanager.properties /etc/tomcat5/
 chown $TOMCAT_USER:$TOMCAT_USER /etc/tomcat5/log4j-trustmanager.properties
 
 yaimlog INFO "Copying trustmanager deps to tomcat server lib directory.." 
 # log4j
 build-jar-repository /var/lib/tomcat5/server/lib log4j
 # bouncy castle
-ln -fs /usr/share/java-ext/bouncycastle-jdk1.5/bcprov.jar /var/lib/tomcat5/server/lib/bcprov.jar
-ln -fs ${GLITE_LOCATION}/share/java/glite-security-util-java.jar /var/lib/tomcat5/server/lib/
-ln -fs ${GLITE_LOCATION}/share/java/glite-security-trustmanager.jar /var/lib/tomcat5/server/lib/
+build-jar-repository /var/lib/tomcat5/shared/lib bcprov
+build-jar-repository /var/lib/tomcat5/shared/lib trustmanager
+build-jar-repository /var/lib/tomcat5/shared/lib trustmanager-tomcat
+
+# ln -fs /usr/share/java/bcprov.jar /var/lib/tomcat5/server/lib/bcprov.jar
+# ln -fs /usr/share/java/trustmanager.jar /var/lib/tomcat5/shared/lib/
+# ln -fs /usr/share/java/trustmanager-tomcat.jar /var/lib/tomcat5/shared/lib/
 
 }
 
