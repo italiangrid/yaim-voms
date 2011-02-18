@@ -39,6 +39,7 @@ return $?
 config_voms_logrotate_setenv () {
 
 yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
+yaimgridenv_set VOMS_LOCATION_VAR ${VOMS_LOCATION_VAR}
 
 }
 
@@ -53,7 +54,7 @@ for vo in ${VOS}; do
     mkdir -p /etc/logrotate.d
   fi
 
-  echo "${GLITE_LOCATION_LOG}/voms.${vo} {" >> ${file_name}  # log file
+  echo "${VOMS_LOCATION_VAR}/log/voms/voms.${vo} {" >> ${file_name}  # log file
   echo "copytruncate" >> ${file_name}                        # options
 
   value=`get_vo_param ${vo} VOMS_CORE_LOGROTATE_LOGNUMBER`

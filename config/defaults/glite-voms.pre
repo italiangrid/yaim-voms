@@ -33,13 +33,20 @@
 # General #
 ###########
 
-GLITE_LOCATION_VAR="/var/glite"
-GLITE_LOCATION_LOG="/var/log/glite"
+VOMS_LOCATION="/usr"
+VOMS_LOCATION_VAR="/var"
+VOMS_LOCATION_CONF="/"
+
+VOMS_ADMIN_LOCATION="/usr/share/voms-admin"
+VOMS_ADMIN_LOCATION_VAR="/"
+
+
 GLITE_LOCATION_TMP="/tmp/glite"
 
 #############
 # VOMS_CORE #
 #############
+
 
 # The maximum length of validity of the ACs that
 # VOMS will grant (in seconds) The default value is 24 hours
@@ -248,7 +255,7 @@ TOMCAT_USER=${TOMCAT_USER:-tomcat}
 # Python #
 ##########
 
-VOMS_PYTHONPATH=/opt/ZSI/lib/python2.4/site-packages
-if ! [ -d $VOMS_PYTHONPATH ]; then
-   VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
-fi
+# VOMS_PYTHONPATH=/opt/ZSI/lib/python2.4/site-packages
+# if ! [ -d $VOMS_PYTHONPATH ]; then
+#   VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
+# fi

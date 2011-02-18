@@ -30,16 +30,21 @@
 #
 ##############################################################################
 
+# Vanno riaggiunti dopo _gip_only
+# config_info_service_voms
+# config_info_service_voms_admin
+#
+# Va messo per ultimo
+# config_bdii_only
+
+
 VOMS_FUNCTIONS="
 config_host_certs
 config_edgusers
 config_add_pool_env
 config_crl
 config_gip_only
-config_info_service_voms
-config_info_service_voms_admin
 config_voms
 config_glite_initd
 config_voms_logrotate
-config_bdii_only
 "

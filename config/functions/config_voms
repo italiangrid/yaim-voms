@@ -184,13 +184,13 @@ init_tnsnames () {
 
    yaimlog DEBUG "Initializing tnsnames.ora..."
 
-   if [ -f $GLITE_LOCATION/etc/voms/tnsnames.ora ]; then
-      rm -rf $GLITE_LOCATION/etc/voms/tnsnames.ora
+   if [ -f $VOMS_LOCATION_CONF/etc/voms/tnsnames.ora ]; then
+      rm -rf $VOMS_LOCATION_CONF/etc/voms/tnsnames.ora
    fi
 
    if [ -n "${ORACLE_CONNECTION_STRING}" ]; then
       yaimlog DEBUG "Global ORACLE connection string exists. Writing as DB_VOMS in tnsnames.ora."
-      echo "DB_VOMS=${ORACLE_CONNECTION_STRING}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+      echo "DB_VOMS=${ORACLE_CONNECTION_STRING}" >> $VOMS_LOCATION_CONF/etc/voms/tnsnames.ora
    fi
 
 }
@@ -205,14 +205,14 @@ process_parameters () {
          value=`echo ${!variable}`
       fi
       if [ -n "$value" ]; then
-         if grep -q "^[ \t]*$name" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1; then
+         if grep -q "^[ \t]*$name" $VOMS_ADMIN_LOCATION_VAR/etc/voms-admin/$vo/$1; then
             if [ "x$1" == "xvoms.service.properties" ]; then
-               sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1 = $value/" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
+               sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1 = $value/" $VOMS_ADMIN_LOCATION_VAR/etc/voms-admin/$vo/$1
             else
-               sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1=$value/" $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
+               sed -i -e "s/[ \t]*\($name\)[ \t]*=[ \t]*.*/\1=$value/" $VOMS_ADMIN_LOCATION_VAR/etc/voms-admin/$vo/$1
             fi
          else
-            echo "$name = $value" >> $GLITE_LOCATION_VAR/etc/voms-admin/$vo/$1
+            echo "$name = $value" >> $VOMS_ADMIN_LOCATION_VAR/etc/voms-admin/$vo/$1
          fi
       fi
       i=`expr $i + 1`
@@ -237,7 +237,7 @@ config_tomcat_voms () {
     fi
 
     if ! grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
-        echo "export TNS_ADMIN=\"${GLITE_LOCATION}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+        echo "export TNS_ADMIN=\"${VOMS_LOCATION_CONF}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
     fi
   
     if [ -f ${ORACLE_CLIENT}/lib/ojdbc14.jar ]; then
@@ -262,7 +262,7 @@ config_tomcat_voms () {
   fi
 
   if ! grep "^JAVA_ENDORSED_DIRS" ${CATALINA_HOME}/conf/tomcat5.conf | grep -q voms-admin; then
-     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:$GLITE_LOCATION/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:$VOMS_LOCATION/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
   fi
 
   yaimlog DEBUG "Configure Tomcat memory size"
@@ -279,6 +279,13 @@ config_tomcat_voms () {
   fi
 }
 
+config_voms_user() {
+
+	## Changing default VOMS user to root.
+	if [ -f /etc/sysconfig/voms ]; then
+		sed -i'' "s/^\(VOMS_USER=\)\(.*$\)/\1root/" /etc/sysconfig/voms 
+	fi
+}
 
 config_voms_setenv () {
 
@@ -292,7 +299,7 @@ config_voms_setenv () {
          exit ${YEX_NOSUCHFILE}
       fi
 
-      yaimgridenv_set TNS_ADMIN ${GLITE_LOCATION}/etc/voms
+      yaimgridenv_set TNS_ADMIN ${VOMS_LOCATION_CONF}/etc/voms
       yaimgridenv_set VOMSORACLE_MIN_CONNECTION ${VOMS_ADMIN_ORACLE_MIN_CONNECTIONS}
       yaimgridenv_set VOMSORACLE_MAX_CONNECTION ${VOMS_ADMIN_ORACLE_MAX_CONNECTIONS}
       yaimgridenv_set VOMSORACLE_INC_CONNECTION ${VOMS_ADMIN_ORACLE_START_CONNECTIONS}
@@ -305,6 +312,12 @@ config_voms_setenv () {
    yaimgridenv_set GLITE_LOCATION_VAR ${GLITE_LOCATION_VAR}
    yaimgridenv_set GLITE_LOCATION_LOG ${GLITE_LOCATION_LOG}
    yaimgridenv_set GLITE_LOCATION_TMP ${GLITE_LOCATION_TMP}
+   
+   yaimgridenv_set VOMS_LOCATION ${VOMS_LOCATION}
+   yaimgridenv_set VOMS_LOCATION_VAR ${VOMS_LOCATION_VAR}
+   yaimgridenv_set VOMS_LOCATION_CONF ${VOMS_LOCATION_CONF}
+   yaimgridenv_set VOMS_ADMIN_LOCATION ${VOMS_ADMIN_LOCATION}
+   yaimgridenv_set VOMS_ADMIN_LOCATION_VAR ${VOMS_ADMIN_LOCATION_VAR} 
 }
 
 
@@ -475,7 +488,7 @@ config_voms () {
             fi
             if [ "x${_voms_db_name}" != "xDB_VOMS" ]; then
                yaimlog DEBUG "Output the connection string to tnsnames.ora. Name is: ${_voms_db_name}"
-               echo "${_voms_db_name}=${_voms_connection_string}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+               echo "${_voms_db_name}=${_voms_connection_string}" >> $VOMS_LOCATION_CONF/etc/voms/tnsnames.ora
             fi
 
             command="$command --dbname ${_voms_db_name} "
@@ -533,8 +546,8 @@ config_voms () {
          fi
 
          yaimlog DEBUG "Configure voms-admin for VO ${vo}"
-         yaimlog DEBUG "The install command is: ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}"  
-         ${GLITE_LOCATION}/sbin/voms-admin-configure install ${command}
+         yaimlog DEBUG "The install command is: ${VOMS_LOCATION}/sbin/voms-admin-configure install ${command}"  
+         ${VOMS_LOCATION}/sbin/voms-admin-configure install ${command}
 
          if [ $? -ne 0 ]; then
              yaimlog ERROR "voms-admin-configure has failed"
@@ -613,7 +626,7 @@ config_voms () {
             fi
 
             yaimlog INFO "Checking VOMS database schema existence and deploying one if missing..."
-            $GLITE_LOCATION/sbin/voms-db-deploy.py deploy --vo "$vo"
+            $VOMS_LOCATION/sbin/voms-db-deploy.py deploy --vo "$vo"
             if [ $? -ne 0 ]; then
                yaimlog ERROR "Cannot contact $_voms_db_host with user $_vo_db_user."
                yaimlog ERROR "Please check whether the database server is up, the database >${_voms_db_name}<"
@@ -627,13 +640,13 @@ config_voms () {
 	        if [ "x${value}" != "x" ]; then
 	            if [ -f "$value" ]; then
 	               yaimlog INFO "Adding default admin from ${value}"
-	               $GLITE_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
+	               $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${value}"
 	            fi
 	        else
 	            if [ -n "${VOMS_ADMIN_CERT}" ]; then
 	               if [ -f "${VOMS_ADMIN_CERT}" ]; then
 	                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
-	                  $GLITE_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
+	                  $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
 	               fi
 	            fi
 	        fi
@@ -693,17 +706,17 @@ config_voms () {
       sleep 5; /etc/init.d/voms-admin start-siblings
       
       yaimlog DEBUG "Saving a copy of the existing voms-core configuration file if any ..."
-      if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ]; then
-         mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf.old
+      if [ -f ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf ]; then
+         mv ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf.old
       fi
-      if [ -f ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass ]; then
-         mv ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass.old
+      if [ -f ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.pass ]; then
+         mv ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.pass ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.pass.old
       fi
 
       vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
 
       yaimlog DEBUG "Configure voms core parameters for VO ${vo}"
-      mkdir -p ${GLITE_LOCATION}/etc/voms/${vo}
+      mkdir -p ${VOMS_LOCATION_CONF}/etc/voms/${vo}
 
       if [ "x$VOMS_ADMIN_INSTALL" == "xfalse" ] && [ "x$_vo_db_type" == "xoracle" ]; then
          _voms_db_name="DB_VOMS"
@@ -725,63 +738,63 @@ config_voms () {
          fi
          if [ "x${_voms_db_name}" != "xDB_VOMS" ]; then
             yaimlog DEBUG "Output the connection string to tnsnames.ora. Name is: ${_voms_db_name}"
-            echo "${_voms_db_name}=${_voms_connection_string}" >> $GLITE_LOCATION/etc/voms/tnsnames.ora
+            echo "${_voms_db_name}=${_voms_connection_string}" >> $VOMS_LOCATION_CONF/etc/voms/tnsnames.ora
          fi
       fi
 
-      echo "--vo=${vo}" > ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--vo=${vo}" > ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       _vo_voms_core_port=`get_vo_param ${vo} VOMS_PORT`
 
-      echo "--port=${_vo_voms_core_port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-      echo "--code=${_vo_voms_core_port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-      echo "--uri=${VOMS_HOST}:${_vo_voms_core_port}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--port=${_vo_voms_core_port}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
+      echo "--code=${_vo_voms_core_port}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
+      echo "--uri=${VOMS_HOST}:${_vo_voms_core_port}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
 
       _vo_voms_core_loglevel=`get_vo_param ${vo} VOMS_CORE_LOGLEVEL`
       if [ -z "$_vo_voms_core_loglevel" ]; then
          _vo_voms_core_loglevel=$VOMS_CORE_LOGLEVEL;
       fi
-      echo "--loglevel=$_vo_voms_core_loglevel" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--loglevel=$_vo_voms_core_loglevel" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
 
       _vo_voms_core_logtype=`get_vo_param ${vo} VOMS_CORE_LOGTYPE`
       if [ -z "$_vo_voms_core_logtype" ]; then
          _vo_voms_core_logtype=$VOMS_CORE_LOGTYPE;
       fi
-      echo "--logtype=$_vo_voms_core_logtype" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--logtype=$_vo_voms_core_logtype" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
 
       _vo_voms_core_newformat=`get_vo_param ${vo} VOMS_NEWFORMAT`
       if [ -z "$_vo_voms_core_newformat" ]; then
          _vo_voms_core_newformat=$VOMS_NEWFORMAT
       fi
       if [ "x$_vo_voms_core_newformat" == "xtrue" ]; then
-         echo "--newformat" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--newformat" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       fi
 
       _vo_voms_core_timeout=`get_vo_param ${vo} VOMS_CORE_TIMEOUT`
       if [ -z "$_vo_voms_core_timeout" ]; then
          _vo_voms_core_timeout=$VOMS_CORE_TIMEOUT;
       fi
-      echo "--timeout=$_vo_voms_core_timeout" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--timeout=$_vo_voms_core_timeout" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
 
       _vo_voms_core_logmax=`get_vo_param ${vo} VOMS_CORE_LOGMAX`
       if [ -z "$_vo_voms_core_logmax" ]; then
           _vo_voms_core_logmax=$VOMS_CORE_LOGMAX
       fi
       if [ -n "$_vo_voms_core_logmax" ]; then
-         echo "--logmax=$_vo_voms_core_logmax" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--logmax=$_vo_voms_core_logmax" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       fi
 
-      echo "--logfile=${GLITE_LOCATION_LOG}/voms.${vo}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
-      echo "--passfile=${GLITE_LOCATION}/etc/voms/${vo}/voms.pass" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--logfile=${VOMS_LOCATION_VAR}/log/voms/voms.${vo}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
+      echo "--passfile=${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.pass" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
 
       if [ "x$_vo_db_type" == "xoracle" ]; then
-         echo "--sqlloc=${VOMS_ORACLE_LIBRARY}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--sqlloc=${VOMS_ORACLE_LIBRARY}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       else
-         echo "--sqlloc=${VOMS_MYSQL_LIBRARY}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--sqlloc=${VOMS_MYSQL_LIBRARY}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       fi
 
       if [ "x${_vo_db_type}" == "xmysql" ]; then
          _voms_db_name=`get_vo_param ${vo} VOMS_DB_NAME`
-         echo "--dbname=${_voms_db_name}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--dbname=${_voms_db_name}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       else
          _voms_db_name="DB_VOMS"
          _connection_string=`get_vo_param ${vo} ORACLE_CONNECTION_STRING`
@@ -790,16 +803,16 @@ config_voms () {
                _voms_db_name=`echo "DB_VOMS_$vo" | tr '[:lower:]' '[:upper:]' | sed -e 's/-/_/g' -e 's/\./_/g'`
             fi
          fi
-         echo "--dbname=${_voms_db_name}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--dbname=${_voms_db_name}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       fi
 
       # Cheking whether shortfqans is defined or not
       value=`get_vo_param ${vo} VOMS_SHORT_FQANS`
       if [ "x${value}" == "xtrue" ]; then
-         echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+         echo "--shortfqans" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
       else
          if [ "x${VOMS_SHORT_FQANS}" == "xtrue" ] && [ "x${value}" != "xfalse" ]; then
-            echo "--shortfqans" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+            echo "--shortfqans" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
          fi
       fi
 
@@ -848,10 +861,10 @@ config_voms () {
             fi
          fi
       fi
-      echo "--username=${_vo_core_db_user}" >> ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      echo "--username=${_vo_core_db_user}" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
 
-      echo "$_vo_core_db_pass" > ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass
-      chmod 640 ${GLITE_LOCATION}/etc/voms/${vo}/voms.pass
+      echo "$_vo_core_db_pass" > ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.pass
+      chmod 640 ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.pass
 
    done
 
@@ -860,50 +873,40 @@ config_voms () {
       yaimlog DEBUG "Starting tomcat"
       /etc/rc.d/init.d/tomcat5 restart
       /sbin/chkconfig tomcat5 on
-
-      # The voms-admin script can't be chkconfig
-      # ln -s $GLITE_LOCATION/etc/init.d/voms-admin /etc/init.d/voms-admin
-      # /sbin/chkconfig voms-admin on
-      # Add the voms-admin script in gLite
-      if [ ! -f ${GLITE_LOCATION}/etc/gLiteservices ] ; then
-         touch ${GLITE_LOCATION}/etc/gLiteservices
-      fi
-
-      grep voms-admin ${GLITE_LOCATION}/etc/gLiteservices > /dev/null
-      if [ ! $? = 0 ] ; then
-         echo "${GLITE_LOCATION}/etc/init.d/voms-admin" >> ${GLITE_LOCATION}/etc/gLiteservices
-      fi
+      
    else
       yaimlog DEBUG "voms admin will not be configured since VOMS_ADMIN_INSTALL=false"
       yaimlog DEBUG "Stopping tomcat"
       /etc/rc.d/init.d/tomcat5 stop
       /sbin/chkconfig tomcat5 off
-      sed -i -e '/^.*voms-admin$/ d' ${GLITE_LOCATION}/etc/gLiteservices
+      # sed -i -e '/^.*voms-admin$/ d' ${GLITE_LOCATION}/etc/gLiteservices
    fi
 
    yaimlog DEBUG "Check whether the log directory exists..."
-   if [ ! -d ${GLITE_LOCATION_LOG} ]; then
-      mkdir -p ${GLITE_LOCATION_LOG}
+   if [ ! -d ${VOMS_LOCATION_VAR}/log/voms ]; then
+      mkdir -p ${VOMS_LOCATION_VAR}/log/voms
    fi
 
    for vo in ${VOS}; do
-      if [ ! -f ${GLITE_LOCATION_LOG}/voms.${vo} ]; then
+      if [ ! -f ${VOMS_LOCATION_VAR}/log/voms/voms.${vo} ]; then
          yaimlog DEBUG "Creating voms.${vo} log file..."
-         touch ${GLITE_LOCATION_LOG}/voms.${vo}
+         touch ${VOMS_LOCATION_VAR}/log/voms/voms.${vo}
       fi
    done
 
    yaimlog DEBUG "Start voms core"
    if [ ! -f /etc/init.d/voms ]; then
-      ln -s $GLITE_LOCATION/etc/init.d/voms /etc/init.d/voms
+      ln -s /etc/rc.d/init.d/voms /etc/init.d/voms
    fi
 
-   if [ ! -f $GLITE_LOCATION/etc/profile.d/voms.sh ]; then
-      ln -s $GLITE_LOCATION/etc/profile.d/grid-env.sh $GLITE_LOCATION/etc/profile.d/voms.sh
+   if [ ! -f $VOMS_LOCATION_CONF/etc/profile.d/voms.sh ]; then
+      ln -s $GLITE_LOCATION/etc/profile.d/grid-env.sh $VOMS_LOCATION_CONF/etc/profile.d/voms.sh
    fi
 
-   ${GLITE_LOCATION}/etc/init.d/voms stop
-   ${GLITE_LOCATION}/etc/init.d/voms start
+   config_voms_user
+   
+   /etc/init.d/voms stop
+   /etc/init.d/voms start
 
    # Add the voms script in gLite
    # /sbin/chkconfig voms on
@@ -912,10 +915,12 @@ config_voms () {
    fi
    grep -v voms-admin ${GLITE_LOCATION}/etc/gLiteservices | grep voms > /dev/null
    if [ ! $? = 0 ] ; then
-      echo "${GLITE_LOCATION}/etc/init.d/voms" >> ${GLITE_LOCATION}/etc/gLiteservices
+      echo "/etc/init.d/voms" >> ${GLITE_LOCATION}/etc/gLiteservices
    fi
 
    for vo in ${VOS}; do
-      chmod +r ${GLITE_LOCATION}/etc/voms/${vo}/voms.conf
+      chmod +r ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
    done
 }
+
+
