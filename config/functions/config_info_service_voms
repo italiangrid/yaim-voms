@@ -36,10 +36,15 @@ config_info_service_voms_setenv () {
 }
 
 config_info_service_voms () {
-
-  INFO_SERVICE_CONFIG=${INFO_SERVICE_CONFIG:-${INSTALL_ROOT}/glite/etc}
-  INFO_SERVICE_SCRIPT=${INFO_SERVICE_SCRIPT:-${INSTALL_ROOT}/glite/libexec}
-  INFO_PROVIDER_PATH=${INFO_PROVIDER_PATH:-${INSTALL_ROOT}/glite/etc/gip/provider}
+  if test "x$VOMS_LOCATION" == "x/usr"; then
+      INFO_SERVICE_CONFIG=/etc/glite/info/service
+      INFO_SERVICE_SCRIPT=/usr/bin
+      INFO_PROVIDER_PATH=/etc/gip/provider
+  else
+      INFO_SERVICE_CONFIG=${INFO_SERVICE_CONFIG:-${INSTALL_ROOT}/glite/etc}
+      INFO_SERVICE_SCRIPT=${INFO_SERVICE_SCRIPT:-${INSTALL_ROOT}/glite/libexec}
+      INFO_PROVIDER_PATH=${INFO_PROVIDER_PATH:-${INSTALL_ROOT}/glite/etc/gip/provider}
+  fi
 
   SERVICE=VOMS
   SERVICE_HOST=${VOMS_HOST}
