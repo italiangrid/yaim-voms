@@ -250,12 +250,3 @@ HIBERNATE_TIMEOUT=100
 
 CATALINA_HOME=/usr/share/tomcat5
 TOMCAT_USER=${TOMCAT_USER:-tomcat}
-
-##########
-# Python #
-##########
-
-# VOMS_PYTHONPATH=/opt/ZSI/lib/python2.4/site-packages
-# if ! [ -d $VOMS_PYTHONPATH ]; then
-#   VOMS_PYTHONPATH=/opt/ZSI/lib/python2.3/site-packages
-# fi

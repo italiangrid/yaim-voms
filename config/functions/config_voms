@@ -268,7 +268,20 @@ config_tomcat_voms () {
   yaimlog DEBUG "Configure Tomcat memory size"
   MemSize=`free -m | awk '/^Mem/{if($2 <= 4096) printf "%i", $2/2; else print "2048";}'`
   MemSize=${MemSize:-256}
-  CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=256m"
+  
+  ## Assume 25m for VO in case who configures the service didn't provide an overall value for MAXPERMSIZE
+  num_configured_vos=`echo $VOS | wc -w` 
+  perm_size=${TOMCAT_MAX_PERM_SIZE:-$((64 + 25 * $num_configured_vos))}
+  
+  if [ $perm_size -gt $(($MemSize/2)) ]; then
+  	yaimlog WARNING "The Java --XX:MaxPermSize setting for your installation uses more than half of the java memory allocated to the tomcat process."
+  	yaimlog WARNING "While this may be acceptable in some deployments, consider using a machine with more memory to host the VOMS server."
+  fi
+  	
+  yaimlog DEBUG "Tomcat MaxPermSize: ${perm_size}m" 
+  
+  CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=${perm_size}m"
+  
   if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
     mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
     cat ${CATALINA_HOME}/conf/tomcat5.conf.old | \
