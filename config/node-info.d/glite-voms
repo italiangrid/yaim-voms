@@ -39,7 +39,6 @@ config_crl
 config_info_service_voms
 config_info_service_voms_admin
 config_voms
-config_glite_initd
 config_voms_logrotate
 config_bdii_5.2
 "

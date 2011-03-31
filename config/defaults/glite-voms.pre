@@ -41,7 +41,6 @@ VOMS_ADMIN_LOCATION="/usr/share/voms-admin"
 VOMS_ADMIN_LOCATION_VAR="/"
 
 
-GLITE_LOCATION_TMP="/tmp/glite"
 
 #############
 # VOMS_CORE #
