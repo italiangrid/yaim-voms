@@ -659,7 +659,9 @@ config_voms () {
 	            if [ -n "${VOMS_ADMIN_CERT}" ]; then
 	               if [ -f "${VOMS_ADMIN_CERT}" ]; then
 	                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
-	                  $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}"
+	                  ## The default is typicall the host certificate, you don't want the email in the certificate to be used
+	                  ## as a VO admin email.
+	                  $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}" --ignore-cert-email
 	               fi
 	            fi
 	        fi
