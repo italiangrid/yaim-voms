@@ -172,6 +172,18 @@ VOMS_ADMIN_PAGINATION_GROUP_MAX=10
 VOMS_ADMIN_PAGINATION_ROLE_MAX=10
 VOMS_ADMIN_PAGINATION_ATTR_MAX=10
 
+# Administrator notification behaviour. 
+
+# When the value is "admins", notifications resulting from user requests are sent only to administrators that can handle 
+# the requests. If no such administrator is found, the service email address is used instead.  
+#
+# When the value is "service", notifications are sent *only* to the service email address specified at VO
+# configuration time. 
+#
+# When the value is "all", notifications are sent to admins *and* the service email address.
+# 
+VOMS_ADMIN_NOTIFICATION_BEHAVIOUR="all"
+
 # VOMS ADMIN SAML Service
 #
 # The lifetime (expressed in minutes) of SAML attribute assertions
