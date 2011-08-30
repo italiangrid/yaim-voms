@@ -130,13 +130,6 @@ VOMS_ADMIN_CERT=/etc/grid-security/hostcert.pem
 # VO_<vo_name>_VOMS_ADMIN_WEB_REGISTRATION_DISABLE
 VOMS_ADMIN_WEB_REGISTRATION_DISABLE=false
 
-# If set to 'true' it will call voms-db-deploy for VOMS database schema deployment.
-# If the database schema has already been deployed - voms-db-deploy will print a
-# warning.
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_DEPLOY_DATABASE
-VOMS_ADMIN_DEPLOY_DATABASE=true
-
 # Run voms-admin-configure with --verbose
 VOMS_ADMIN_VERBOSE=true
 
