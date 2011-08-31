@@ -38,6 +38,7 @@ config_add_pool_env
 config_crl
 config_info_service_voms
 config_info_service_voms_admin
+config_glue2_info_service_voms
 config_voms
 config_voms_logrotate
 config_bdii_5.2

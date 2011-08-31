@@ -1,0 +1,75 @@
+config_glue2_info_service_voms_check () {
+  requires $1 SITE_NAME INSTALL_ROOT VOMS_ADMIN_INSTALL
+}
+
+config_glue2_info_service_voms_setenv () {
+  yaimlog DEBUG "This function currently doesn't set any environment variables."
+}
+
+config_glue2_info_service_voms () {
+
+  INFO_SERVICE_CONFIG=/etc/glite/info/service
+  INFO_SERVICE_BIN_PATH=/usr/bin
+  INFO_PROVIDER_PATH=/var/lib/bdii/gip/provider
+  
+  SERVICE=VOMS
+  SERVICE_HOST=${VOMS_HOST}
+  
+  GLUE2_CONF_TEMPLATE="${INFO_SERVICE_CONFIG}/glite-info-glue2-voms.conf.template"
+  GLUE2_CONF_FILE="${INFO_SERVICE_CONFIG}/glite-info-glue2-voms.conf"
+
+  GLUE2_ADMIN_CONF_TEMPLATE="${INFO_SERVICE_CONFIG}/glite-info-glue2-voms-admin.conf.template"
+  GLUE2_ADMIN_CONF_FILE="${INFO_SERVICE_CONFIG}/glite-info-glue2-voms-admin.conf"
+  
+  GLUE2_SCRIPT="${INFO_SERVICE_BIN_PATH}/glite-info-glue2-voms"
+  GLUE2_INFO_PROVIDER="${INFO_PROVIDER_PATH}/glite-info-glue2-provider-service-voms"
+  
+  if [ ! -f ${GLUE2_CONF_TEMPLATE} ]; then
+  	yaimlog ERROR "The glue2 template file ${GLUE2_CONF_TEMPLATE} was not found."
+  	exit 1
+  fi
+  
+  if [ ! -f ${GLUE2_SCRIPT} ]; then
+	yaimlog ERROR "The script file ${GLUE2_SCRIPT} was not found."
+  fi
+  
+  yaimlog DEBUG "Delete a previous version of the ${GLUE2_CONF_FILE} if it exists"
+  rm -rf ${GLUE2_CONF_FILE}
+  
+  yaimlog DEBUG "Create ${GLUE2_CONF_FILE}"
+  cp ${GLUE2_CONF_TEMPLATE} ${GLUE2_CONF_FILE}
+  
+  yaimlog DEBUG "Create the ${INFO_PROVIDER_PATH} in case it doesn't exist"
+  mkdir -p ${INFO_PROVIDER_PATH}
+  
+  PROVIDER_CONF_FILES=${GLUE2_CONF_FILE}
+  
+  
+  ## If VOMS Admin is configured to be installed, create the glue2 provider
+  ## configuration
+  if [ "x${VOMS_ADMIN_INSTALL}" == "xtrue" ]; then
+    yaimlog DEBUG "Creating the glue2 VOMS Admin info provider..."
+    if [ ! -f ${GLUE2_ADMIN_CONF_TEMPLATE} ]; then
+  		yaimlog ERROR "The glue2 template file ${GLUE2_ADMIN_CONF_TEMPLATE} was not found."
+  		exit 1
+  	fi
+  	
+  	yaimlog DEBUG "Delete a previous version of the ${GLUE2_ADMIN_CONF_FILE} if it exists"
+  	rm -rf ${GLUE2_ADMIN_CONF_FILE}
+  	
+  	yaimlog DEBUG "Create ${GLUE2_ADMIN_CONF_FILE}"
+    cp ${GLUE2_ADMIN_CONF_TEMPLATE} ${GLUE2_ADMIN_CONF_FILE}
+    PROVIDER_CONF_FILES=${PROVIDER_CONF_FILES}","${GLUE2_ADMIN_CONF_FILE}
+  fi
+  
+  yaimlog DEBUG "Create the ${GLUE2_INFO_PROVIDER} file"
+  
+  cat << EOF > ${GLUE2_INFO_PROVIDER}
+#!/bin/sh
+export VOMS_HOST=${SERVICE_HOST}
+${GLUE2_SCRIPT} ${PROVIDER_CONF_FILES} $SITE_NAME
+EOF
+  
+  chmod +x ${GLUE2_INFO_PROVIDER}
+  return 0 
+}
