@@ -1,7 +1,7 @@
 %define prefix /opt/glite
 
 Name: yaim-voms
-Version: 1.0.11
+Version: 1.1.0
 Release: 1%{?dist}
 Summary: The Virtual Organisation Membership Service YAIM configuration module
 
