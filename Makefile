@@ -20,7 +20,7 @@ rpm:
 	tar --exclude='.git/*' --exclude='rpmbuild' --exclude='rpmbuild/*' -cvzf $(rpmbuild_dir)/SOURCES/$(name)-$(version).tar.gz *
 	rpmbuild --nodeps -v -ba $(spec) --define "_topdir $(rpmbuild_dir)"
 
-etics: clean dist rpm
+etics: clean rpm
 	mkdir -p tgz RPMS
 	cp target/*.tar.gz tgz
 	cp -r $(rpmbuild_dir)/RPMS/* $(rpmbuild_dir)/SRPMS/* RPMS
