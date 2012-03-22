@@ -43,6 +43,14 @@ config_voms_check ()
       exit 1
    fi
 
+   detect_tomcat
+
+   if [ -z ${TOMCAT_VERSION} ]; then 
+       yaimlog ERROR "Tomcat is probably not installed !"
+       yaimlog ERROR "${YERRORSTR}"
+       exit 1
+   fi
+    
    LIBSUFFIX=""
    if [ `uname -m` == "x86_64" ]; then
       LIBSUFFIX="64"
@@ -226,18 +234,18 @@ config_tomcat_voms () {
   if [ "x$oracleUsed" == "xyes" ]; then
 
     yaimlog DEBUG "Setting OCI support for tomcat"
-    if ! grep -q "^JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
+    if ! grep -q "^JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf; then
        echo "JAVA_OPTS=\"\$JAVA_OPTS -Djava.library.path=${ORACLE_CLIENT}/lib\"" \
-           >> ${CATALINA_HOME}/conf/tomcat5.conf
+           >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
     fi
 
     # LD_LIBRARY_PATH already contains the oracle libs from the yaimgridpath command
-    if ! grep -q "^export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/tomcat5.conf; then
-       echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    if ! grep -q "^export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}" ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf; then
+       echo "export LD_LIBRARY_PATH=\"\$LD_LIBRARY_PATH:${ORACLE_CLIENT}/lib\"" >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
     fi
 
-    if ! grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/tomcat5.conf; then
-        echo "export TNS_ADMIN=\"${VOMS_LOCATION_CONF}/etc/voms\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    if ! grep -q "^export TNS_ADMIN" ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf; then
+        echo "export TNS_ADMIN=\"${VOMS_LOCATION_CONF}/etc/voms\"" >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
     fi
   
     if [ -f ${ORACLE_CLIENT}/lib/ojdbc14.jar ]; then
@@ -261,8 +269,8 @@ config_tomcat_voms () {
      ln -s /usr/share/java/xalan-j2-serializer.jar $CATALINA_HOME/common/lib/xalan-j2-serializer.jar
   fi
 
-  if ! grep "^JAVA_ENDORSED_DIRS" ${CATALINA_HOME}/conf/tomcat5.conf | grep -q voms-admin; then
-     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:$VOMS_LOCATION/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+  if ! grep "^JAVA_ENDORSED_DIRS" ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf | grep -q voms-admin; then
+     echo "JAVA_ENDORSED_DIRS=\"\$JAVA_ENDORSED_DIRS:$VOMS_LOCATION/share/voms-admin/endorsed\"" >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
   fi
 
   yaimlog DEBUG "Configure Tomcat memory size"
@@ -282,13 +290,13 @@ config_tomcat_voms () {
   
   CATALINA_OPTS="-Xmx${MemSize}M -server -Dsun.net.client.defaultReadTimeout=240000 -XX:MaxPermSize=${perm_size}m"
   
-  if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/tomcat5.conf; then
-    mv ${CATALINA_HOME}/conf/tomcat5.conf ${CATALINA_HOME}/conf/tomcat5.conf.old
-    cat ${CATALINA_HOME}/conf/tomcat5.conf.old | \
+  if grep -q "^CATALINA_OPTS" ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf; then
+    mv ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf.old
+    cat ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf.old | \
         sed -e "s#^CATALINA_OPTS=\"\-Xmx.*#CATALINA_OPTS=\"${CATALINA_OPTS}\"#" \
-        >> ${CATALINA_HOME}/conf/tomcat5.conf
+        >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
   else
-    echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/tomcat5.conf
+    echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
   fi
 }
 
@@ -394,6 +402,9 @@ config_voms () {
       fi
    fi
 
+   if [ "x$mysqlUsed" == "xyes" ]; then
+      /sbin/chkconfig mysqld on
+   fi
    if [ "x${VOMS_ADMIN_INSTALL}" == "xtrue" ]; then
       source ${FUNCTIONS_DIR}/config_secure_tomcat
       config_secure_tomcat_check
@@ -888,14 +899,14 @@ config_voms () {
    if [ "x${VOMS_ADMIN_INSTALL}" == "xtrue" ]; then
 
       yaimlog DEBUG "Starting tomcat"
-      /etc/rc.d/init.d/tomcat5 restart
-      /sbin/chkconfig tomcat5 on
+      /etc/rc.d/init.d/${TOMCAT_VERSION} restart
+      /sbin/chkconfig ${TOMCAT_VERSION} on
       
    else
       yaimlog DEBUG "voms admin will not be configured since VOMS_ADMIN_INSTALL=false"
       yaimlog DEBUG "Stopping tomcat"
-      /etc/rc.d/init.d/tomcat5 stop
-      /sbin/chkconfig tomcat5 off
+      /etc/rc.d/init.d/${TOMCAT_VERSION} stop
+      /sbin/chkconfig ${TOMCAT_VERSION} off
       # sed -i -e '/^.*voms-admin$/ d' ${GLITE_LOCATION}/etc/gLiteservices
    fi
 
