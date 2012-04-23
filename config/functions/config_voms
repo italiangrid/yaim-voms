@@ -517,6 +517,15 @@ config_voms () {
 
             command="$command --dbname ${_voms_db_name} "
          fi
+         
+         value=`get_vo_param ${vo} VOMS_SKIP_CA_CHECK`
+         if [ "x${value}" == "xtrue" ]; then
+             command="${command} --skip-ca-check "
+         else
+            if [ "x${VOMS_SKIP_CA_CHECK}" == "xtrue" ] && [  "x${value}" != "xfalse" ]; then
+               command="${command} --skip-ca-check "
+            fi
+         fi
 
          value=`get_vo_param ${vo} VOMS_ADMIN_WEB_REGISTRATION_DISABLE`
          if [ "x${value}" == "xtrue" ]; then
@@ -539,9 +548,10 @@ config_voms () {
              command="${command} --voms-group ${VOMS_ADMIN_VOMS_GROUP}"
          fi
 
-         if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
-             mkdir -p ${GLITE_LOCATION}/etc/voms
-         fi
+         # Not needed anymore
+         # if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
+         #    mkdir -p ${GLITE_LOCATION}/etc/voms
+         # fi
 
          if [ -n "$VOMS_ADMIN_SAML_AA_CERTIFICATE" ] && [ -n "$VOMS_ADMIN_SAML_AA_KEY" ] && \
                [ -f "$VOMS_ADMIN_SAML_AA_CERTIFICATE" ] && [ -f "$VOMS_ADMIN_SAML_AA_KEY" ]; then
@@ -690,8 +700,17 @@ config_voms () {
                            voms.mkgridmap.translate_dn_email_format
                            voms.webapp.always-show-full-dns
                            voms.csrf.log_only
-                           voms.notification.notify)
-                           
+                           voms.notification.notify
+                           voms.membership.default_lifetime
+                           voms.task.membership_check.period
+                           voms.membership.expiration_warning_period
+                           voms.membership.expiration_grace_period
+                           voms.membership.notification_resend_period
+                           voms.preserve_expired_members
+                           voms.disable_membership_end_time
+                           voms.aup.sign_aup_task_lifetime
+                           voms.request.vo_membership.enable_attribute_requests)
+    
 
          _variable_names="VOMS_ADMIN_CA_RELOAD_PERIOD
                           VOMS_ADMIN_AUDITING
@@ -704,7 +723,16 @@ config_voms () {
                           VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT
                           VOMS_ADMIN_SHOW_FULL_DN
                           VOMS_ADMIN_WS_CSRF_LOG_ONLY
-                          VOMS_ADMIN_NOTIFICATION_BEHAVIOUR"
+                          VOMS_ADMIN_NOTIFICATION_BEHAVIOUR
+                          VOMS_ADMIN_MEMBERSHIP_DEFAULT_LIFETIME
+                          VOMS_ADMIN_MEMBERSHIP_CHECK_PERIOD
+                          VOMS_ADMIN_MEMBERSHIP_EXPIRATION_WARNING_PERIOD
+                          VOMS_ADMIN_MEMBERSHIP_EXPIRATION_GRACE_PERIOD
+                          VOMS_ADMIN_MEMBERSHIP_NOTIFICATION_RESEND_PERIOD
+                          VOMS_ADMIN_PRESERVE_EXPIRED_MEMBERS
+                          VOMS_ADMIN_DISABLE_MEMBERSHIP_END_TIME
+                          VOMS_ADMIN_SIGN_AUP_TASK_LIFETIME
+                          VOMS_ADMIN_ENABLE_ATTRIBUTE_REQUESTS"
 
          process_parameters "voms.service.properties"
 

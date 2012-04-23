@@ -38,4 +38,3 @@ else
    VOMS_MYSQL_LIBRARY=${VOMS_LOCATION}/lib/libvomsmysql.so
    VOMS_ORACLE_LIBRARY=${VOMS_LOCATION}/lib/libvomsoracle.so
 fi
-

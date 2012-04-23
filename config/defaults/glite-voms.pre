@@ -40,8 +40,6 @@ VOMS_LOCATION_CONF="/"
 VOMS_ADMIN_LOCATION="/usr/share/voms-admin"
 VOMS_ADMIN_LOCATION_VAR="/"
 
-
-
 #############
 # VOMS_CORE #
 #############
@@ -109,6 +107,9 @@ VOMS_CORE_LOGTYPE=7
 #
 VOMS_NEWFORMAT=false
 
+# When this option is set to true, VOMS checks only the certificate subject
+# when assessing user membership in a VO.
+VOMS_SKIP_CA_CHECK=false
 
 ##############
 # VOMS_ADMIN #
@@ -124,12 +125,6 @@ VOMS_ADMIN_INSTALL=true
 # The default value is to create an administrator for the local host certificate.
 VOMS_ADMIN_CERT=/etc/grid-security/hostcert.pem
 
-# Set this variable to 'true' if you want to disable the user registration 
-# via the voms-admin web interface.
-# This parameter can be specified per VO in the following way:
-# VO_<vo_name>_VOMS_ADMIN_WEB_REGISTRATION_DISABLE
-VOMS_ADMIN_WEB_REGISTRATION_DISABLE=false
-
 # Run voms-admin-configure with --verbose
 VOMS_ADMIN_VERBOSE=true
 
@@ -142,15 +137,77 @@ VOMS_ADMIN_SHOW_FULL_DN=false
 # to the "Email=" format used by default?
 VOMS_ADMIN_TRANSLATE_DN_EMAIL_FORMAT=false
 
+## VOMS Admin registration service options
+
+# Set this variable to 'true' if you want to disable the user registration 
+# via the voms-admin web interface.
+# This parameter can be specified per VO in the following way:
+# VO_<vo_name>_VOMS_ADMIN_WEB_REGISTRATION_DISABLE
+VOMS_ADMIN_WEB_REGISTRATION_DISABLE=false
+
 # Should voms-admin send a warning email to the user when
 # his/her uncorfimed request is removed from the database?
 VOMS_ADMIN_MEMBERSHIP_REQUEST_WARNINGS=true
 
 # Time in seconds that unconfirmed requests are kept inside the voms database.
-VOMS_ADMIN_MEMBERSHIP_REQUEST_LIFETIME=86400
+# The current default is 7 days
+VOMS_ADMIN_MEMBERSHIP_REQUEST_LIFETIME=604800
+
+## Enable attribute request at registration time. Setting this option to true
+## will allow users to request membership in VO groups also when first registering
+## at the VO. The VO manager will be given the chance to approve every membership
+## request.
+VOMS_ADMIN_ENABLE_ATTRIBUTE_REQUESTS=false
+
+## VOMS Admin membership service options
+
+## Default VO membership lifetime duration (in months).
+## This setting is used to compute the default membership expiration date
+## for newly created users. The default value is  12 months
+VOMS_ADMIN_MEMBERSHIP_DEFAULT_LIFETIME = 12
+
+## Period for the membership check background thread (in seconds).
+## Default value is every 6 hours.
+VOMS_ADMIN_MEMBERSHIP_CHECK_PERIOD =  21600
+
+## Warning period duration in days. VOMS Admin will notify of 
+## users about to expire in the next number of days expressed by 
+## this configuration option.  
+VOMS_ADMIN_MEMBERSHIP_EXPIRATION_WARNING_PERIOD = 30
+
+## Membership expiration grace period (in days). In the grace period
+## the user will be maintained active even if its membership has expired.
+## Note that this option has no effect if the VOMS_ADMIN_PRESERVE_EXPIRED_MEMBERS
+## option is set to true.
+VOMS_ADMIN_MEMBERSHIP_EXPIRATION_GRACE_PERIOD = 7
+
+## Time (in days) that should pass between consecutive warning expiration messages sent
+## to VO administrators to inform about expired and expiring VO members.
+## Note that state about sent notifications is not stored in the database, so the counting
+## is zeroed at every service restart.
+VOMS_ADMIN_MEMBERSHIP_NOTIFICATION_RESEND_PERIOD = 1
+
+## When this option value is true, expired users are NOT suspended.
+## VO administrators are always notified of expired and about to expire
+## members via mail.
+VOMS_ADMIN_PRESERVE_EXPIRED_MEMBERS = false
+
+## This flag disables the membership end time checks completely.
+## Turn this setting to true in case you want that user membership 
+## lifetime is linked only to the AUP acceptance period.  
+VOMS_ADMIN_DISABLE_MEMBERSHIP_END_TIME = false
+
+## VOMS ADMIN AUP options
+
+## The time (in days) given to users to sign the AUP, after being notified, before 
+## being suspended.
+VOMS_ADMIN_SIGN_AUP_TASK_LIFETIME = 15
+
+## VOMS ADMIN general settings
 
 # voms ca updater period in seconds
-VOMS_ADMIN_CA_RELOAD_PERIOD=1800
+# The current default is every 6 hours
+VOMS_ADMIN_CA_RELOAD_PERIOD=21600
 
 # Enable/disable the voms auditing facility
 VOMS_ADMIN_AUDITING=false
@@ -160,10 +217,10 @@ VOMS_ADMIN_AUDITING=false
 VOMS_ADMIN_AUTH_READS=true
 
 # voms pagination options (voms-admin web interface)
-VOMS_ADMIN_PAGINATION_USER_MAX=10
-VOMS_ADMIN_PAGINATION_GROUP_MAX=10
-VOMS_ADMIN_PAGINATION_ROLE_MAX=10
-VOMS_ADMIN_PAGINATION_ATTR_MAX=10
+VOMS_ADMIN_PAGINATION_USER_MAX=50
+VOMS_ADMIN_PAGINATION_GROUP_MAX=50
+VOMS_ADMIN_PAGINATION_ROLE_MAX=50
+VOMS_ADMIN_PAGINATION_ATTR_MAX=50
 
 # Administrator notification behaviour. 
 
@@ -190,7 +247,8 @@ VOMS_ADMIN_SAML_AA_KEY=/etc/grid-security/tomcat-key.pem
 #
 # VOMS Admin now implements CSRF attacks mitigation on the web
 # service interface. The CSRF guard can be switched off by putting it
-# in "log only" mode.
+# in "log only" mode. The default value is to have it switched off to
+# ensure backward compatibility with older clients.
 #
 VOMS_ADMIN_WS_CSRF_LOG_ONLY=true
 
