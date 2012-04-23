@@ -164,44 +164,44 @@ VOMS_ADMIN_ENABLE_ATTRIBUTE_REQUESTS=false
 ## Default VO membership lifetime duration (in months).
 ## This setting is used to compute the default membership expiration date
 ## for newly created users. The default value is  12 months
-VOMS_ADMIN_MEMBERSHIP_DEFAULT_LIFETIME = 12
+VOMS_ADMIN_MEMBERSHIP_DEFAULT_LIFETIME=12
 
 ## Period for the membership check background thread (in seconds).
 ## Default value is every 6 hours.
-VOMS_ADMIN_MEMBERSHIP_CHECK_PERIOD =  21600
+VOMS_ADMIN_MEMBERSHIP_CHECK_PERIOD=21600
 
 ## Warning period duration in days. VOMS Admin will notify of 
 ## users about to expire in the next number of days expressed by 
 ## this configuration option.  
-VOMS_ADMIN_MEMBERSHIP_EXPIRATION_WARNING_PERIOD = 30
+VOMS_ADMIN_MEMBERSHIP_EXPIRATION_WARNING_PERIOD=30
 
 ## Membership expiration grace period (in days). In the grace period
 ## the user will be maintained active even if its membership has expired.
 ## Note that this option has no effect if the VOMS_ADMIN_PRESERVE_EXPIRED_MEMBERS
 ## option is set to true.
-VOMS_ADMIN_MEMBERSHIP_EXPIRATION_GRACE_PERIOD = 7
+VOMS_ADMIN_MEMBERSHIP_EXPIRATION_GRACE_PERIOD=7
 
 ## Time (in days) that should pass between consecutive warning expiration messages sent
 ## to VO administrators to inform about expired and expiring VO members.
 ## Note that state about sent notifications is not stored in the database, so the counting
 ## is zeroed at every service restart.
-VOMS_ADMIN_MEMBERSHIP_NOTIFICATION_RESEND_PERIOD = 1
+VOMS_ADMIN_MEMBERSHIP_NOTIFICATION_RESEND_PERIOD=1
 
 ## When this option value is true, expired users are NOT suspended.
 ## VO administrators are always notified of expired and about to expire
 ## members via mail.
-VOMS_ADMIN_PRESERVE_EXPIRED_MEMBERS = false
+VOMS_ADMIN_PRESERVE_EXPIRED_MEMBERS=false
 
 ## This flag disables the membership end time checks completely.
 ## Turn this setting to true in case you want that user membership 
 ## lifetime is linked only to the AUP acceptance period.  
-VOMS_ADMIN_DISABLE_MEMBERSHIP_END_TIME = false
+VOMS_ADMIN_DISABLE_MEMBERSHIP_END_TIME=false
 
 ## VOMS ADMIN AUP options
 
 ## The time (in days) given to users to sign the AUP, after being notified, before 
 ## being suspended.
-VOMS_ADMIN_SIGN_AUP_TASK_LIFETIME = 15
+VOMS_ADMIN_SIGN_AUP_TASK_LIFETIME=15
 
 ## VOMS ADMIN general settings
 
