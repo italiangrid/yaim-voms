@@ -1,7 +1,7 @@
 %define prefix /opt/glite
 
 Name: yaim-voms
-Version: 1.1.0
+Version: 1.1.1
 Release: 1%{?dist}
 Summary: The Virtual Organisation Membership Service YAIM configuration module
 
@@ -61,5 +61,5 @@ rm -rf $RPM_BUILD_ROOT
 %doc LICENSE
 
 %changelog
-* Fri Feb 24 2011 Andrea Ceccanti <andrea.ceccanti at cnaf.infn.it> - 1.0.11-1
+* Fri Feb 24 2011 Andrea Ceccanti <andrea.ceccanti at cnaf.infn.it> - 1.1.1-1
 - Self-managed packaging
