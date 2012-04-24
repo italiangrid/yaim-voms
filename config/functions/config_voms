@@ -548,11 +548,6 @@ config_voms () {
              command="${command} --voms-group ${VOMS_ADMIN_VOMS_GROUP}"
          fi
 
-         # Not needed anymore
-         # if [ ! -d ${GLITE_LOCATION}/etc/voms ]; then
-         #    mkdir -p ${GLITE_LOCATION}/etc/voms
-         # fi
-
          if [ -n "$VOMS_ADMIN_SAML_AA_CERTIFICATE" ] && [ -n "$VOMS_ADMIN_SAML_AA_KEY" ] && \
                [ -f "$VOMS_ADMIN_SAML_AA_CERTIFICATE" ] && [ -f "$VOMS_ADMIN_SAML_AA_KEY" ]; then
             command="${command} --aa-cert ${VOMS_ADMIN_SAML_AA_CERTIFICATE} --aa-key ${VOMS_ADMIN_SAML_AA_KEY}"
@@ -669,6 +664,17 @@ config_voms () {
                yaimlog ERROR "${YERRORSTR}"
                exit ${YEX_FUNCERR}
             fi
+            
+            value=`get_vo_param ${vo} VOMS_ADMIN_AUTH_READS`
+            if [ "x${value}" == "xtrue" ]; then
+                yaimlog INFO "Opening the VO to all authenticated clients."
+                $VOMS_LOCATION/sbin/voms-db-deploy.py grant-read-only-access --vo "$vo"
+            else
+                if [ "x${VOMS_ADMIN_AUTH_READS}" == "xtrue" ] && [ "x${value}" != "xfalse" ]; then
+                    yaimlog INFO "Opening the VO to all authenticated clients."
+                    $VOMS_LOCATION/sbin/voms-db-deploy.py grant-read-only-access --vo "$vo"
+                fi
+            fi
          	
 			value=`get_vo_param ${vo} VOMS_ADMIN_CERT`
 	        if [ "x${value}" != "x" ]; then
@@ -680,9 +686,15 @@ config_voms () {
 	            if [ -n "${VOMS_ADMIN_CERT}" ]; then
 	               if [ -f "${VOMS_ADMIN_CERT}" ]; then
 	                  yaimlog INFO "Adding default admin from ${VOMS_ADMIN_CERT}"
-	                  ## The default is typicall the host certificate, you don't want the email in the certificate to be used
+
+	                  ## The default is typically the host certificate, you don't want the email in the certificate to be used
 	                  ## as a VO admin email.
-	                  $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}" --ignore-cert-email
+                      if [ "${VOMS_ADMIN_CERT}" = "/etc/grid-security/hostcert.pem" ]; then
+                        yaimlog INFO "Ignoring email from the administrator certificate: ${VOMS_ADMIN_CERT}"
+	                    $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}" --ignore-cert-email
+                      else
+	                    $VOMS_LOCATION/sbin/voms-db-deploy.py add-admin --vo "$vo" --cert "${VOMS_ADMIN_CERT}" 
+                      fi
 	               fi
 	            fi
 	        fi
@@ -871,6 +883,15 @@ config_voms () {
             echo "--shortfqans" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
          fi
       fi
+      
+      value=`get_vo_param ${vo} VOMS_SKIP_CA_CHECK`
+      if [ "x${value}" == "xtrue" ]; then
+         echo "--skipcacheck" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
+      else
+         if [ "x${VOMS_SKIP_CA_CHECK}" == "xtrue" ] && [  "x${value}" != "xfalse" ]; then
+            echo "--skipcacheck" >> ${VOMS_LOCATION_CONF}/etc/voms/${vo}/voms.conf
+         fi
+      fi
 
       _vo_core_db_user=`get_vo_param ${vo} VOMS_CORE_DB_USER`
       _vo_core_db_pass=`get_vo_param ${vo} VOMS_CORE_DB_PASS`
@@ -953,10 +974,6 @@ config_voms () {
    yaimlog DEBUG "Start voms core"
    if [ ! -f /etc/init.d/voms ]; then
       ln -s /etc/rc.d/init.d/voms /etc/init.d/voms
-   fi
-
-   if [ ! -f $VOMS_LOCATION_CONF/etc/profile.d/voms.sh ]; then
-      ln -s $GLITE_LOCATION/etc/profile.d/grid-env.sh $VOMS_LOCATION_CONF/etc/profile.d/voms.sh
    fi
 
    config_voms_user
