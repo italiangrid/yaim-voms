@@ -231,6 +231,9 @@ process_parameters () {
 
 config_tomcat_voms () {
 
+	[ ${TOMCAT_VERSION} = "tomcat6" ] && catalina_lib=$CATALINA_HOME/lib || catalina_lib=$CATALINA_HOME/common/lib
+	yaimlog DEBUG "Setting path for common tomcat libraries: $catalina_lib"
+
   if [ "x$oracleUsed" == "xyes" ]; then
 
     yaimlog DEBUG "Setting OCI support for tomcat"
@@ -249,8 +252,8 @@ config_tomcat_voms () {
     fi
   
     if [ -f ${ORACLE_CLIENT}/lib/ojdbc14.jar ]; then
-       if ! [ -e ${CATALINA_HOME}/common/lib/ojdbc14.jar ]; then
-          cp ${ORACLE_CLIENT}/lib/ojdbc14.jar ${CATALINA_HOME}/common/lib
+       if ! [ -e ${catalina_lib}/ojdbc14.jar ]; then
+          cp ${ORACLE_CLIENT}/lib/ojdbc14.jar ${catalina_lib}
        fi
     else
         yaimlog ERROR "${ORACLE_CLIENT}/lib/ojdbc14.jar doesn't exist and it's needed to configure the OCI support in Tomcat"
@@ -262,11 +265,11 @@ config_tomcat_voms () {
   fi
 
   # Configure Xalan
-  if [ -f  /usr/share/java/xalan-j2.jar ] && ! [ -f $CATALINA_HOME/common/lib/xalan-j2.jar ]; then
-     ln -s /usr/share/java/xalan-j2.jar $CATALINA_HOME/common/lib/xalan-j2.jar
+  if [ -f  /usr/share/java/xalan-j2.jar ] && ! [ -f ${catalina_lib}/xalan-j2.jar ]; then
+     ln -s /usr/share/java/xalan-j2.jar ${catalina_lib}/lib/xalan-j2.jar
   fi
-  if [ -f  /usr/share/java/xalan-j2-serializer.jar ] && ! [ -f $CATALINA_HOME/common/lib/xalan-j2-serializer.jar ]; then
-     ln -s /usr/share/java/xalan-j2-serializer.jar $CATALINA_HOME/common/lib/xalan-j2-serializer.jar
+  if [ -f  /usr/share/java/xalan-j2-serializer.jar ] && ! [ -f ${catalina_lib}/xalan-j2-serializer.jar ]; then
+     ln -s /usr/share/java/xalan-j2-serializer.jar ${catalina_lib}/xalan-j2-serializer.jar
   fi
 
   if ! grep "^JAVA_ENDORSED_DIRS" ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf | grep -q voms-admin; then
@@ -298,6 +301,13 @@ config_tomcat_voms () {
   else
     echo "CATALINA_OPTS=\"${CATALINA_OPTS}\"" >> ${CATALINA_HOME}/conf/${TOMCAT_VERSION}.conf
   fi
+	
+	## Tomcat6 on SL6 doesn't automatically provide javamail 
+	if [ ${TOMCAT_VERSION} = "tomcat6" ]; then
+		yaimlog DEBUG "Linking javamail jar in ${CATALINA_HOME}/lib"
+		build-jar-repository -s ${CATALINA_HOME}/lib javamail 
+	fi
+	
 }
 
 config_voms_user() {
