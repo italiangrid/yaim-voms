@@ -96,7 +96,7 @@ config_voms_check ()
       vo_name=`echo $vo | sed -e 's/-/_/g' -e 's/\./_/g' | tr '[:lower:]' '[:upper:]'`
       _port=`get_vo_param ${vo} VOMS_PORT`
       for p in $_portlist; do
-         if [[ $_port =~ '^[0-9]*$' ]]; then
+         if [[ $_port =~ ^[0-9]*$ ]]; then
             if [ "x$p" == "x$_port" ]; then
                yaimlog ERROR "The value of VO_${vo_name}_VOMS_PORT not unique. Abort."
                exit ${YEX_CONFFILE}
