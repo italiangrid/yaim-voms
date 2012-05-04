@@ -315,6 +315,11 @@ config_voms_user() {
 	## Changing default VOMS user to root.
 	if [ -f /etc/sysconfig/voms ]; then
 		sed -i'' "s/^\(VOMS_USER=\)\(.*$\)/\1root/" /etc/sysconfig/voms 
+
+        ## Setup TNS_ADMIN for VOMS
+        if [ "x$oracleUsed" == "xyes" ]; then
+            grep -q TNS_ADMIN /etc/sysconfig/voms || echo "TNS_ADMIN=/etc/voms" >> /etc/sysconfig/voms
+        fi
 	fi
 }
 
