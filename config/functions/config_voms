@@ -266,7 +266,7 @@ config_tomcat_voms () {
 
   # Configure Xalan
   if [ -f  /usr/share/java/xalan-j2.jar ] && ! [ -f ${catalina_lib}/xalan-j2.jar ]; then
-     ln -s /usr/share/java/xalan-j2.jar ${catalina_lib}/lib/xalan-j2.jar
+     ln -s /usr/share/java/xalan-j2.jar ${catalina_lib}/xalan-j2.jar
   fi
   if [ -f  /usr/share/java/xalan-j2-serializer.jar ] && ! [ -f ${catalina_lib}/xalan-j2-serializer.jar ]; then
      ln -s /usr/share/java/xalan-j2-serializer.jar ${catalina_lib}/xalan-j2-serializer.jar
